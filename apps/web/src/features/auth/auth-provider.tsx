@@ -91,7 +91,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         useSessionStore.getState().setAuthState(storedToken, me)
         setIsAuthenticated(true)
       } catch {
-        localStorage.removeItem(STORAGE_TOKEN)
+        useSessionStore.getState().clearAuthState()
       }
     }
 
@@ -122,6 +122,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
         setIsAuthenticated(false)
       })
 
+      mgr.events.addAccessTokenExpired(() => {
+        useSessionStore.getState().clearAuthState()
+        setIsAuthenticated(false)
+      })
+
       try {
         const user = await mgr.getUser()
         if (user && !user.expired) {
@@ -129,9 +134,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
           useSessionStore.getState().setAuthState(user.access_token, me)
           setIsAuthenticated(true)
           await useSessionStore.getState().refreshWorkspaces()
+        } else {
+          useSessionStore.getState().clearAuthState()
         }
       } catch {
-        // No existing session
+        useSessionStore.getState().clearAuthState()
       }
     }
   }, [])
