@@ -1,11 +1,13 @@
 # AGENTS.md - Base Context for `mock-loom`
 
 ## 1) Purpose
+
 This file defines the minimum mandatory operating context for any agent or collaborator working in this repository.
 
 The project goal is to build a **Rule-Based API Mocking Engine** with stateful behavior, dynamic rules, and entity-level rollback capabilities.
 
 ## 2) Mandatory reading order for initial context
+
 1. `docs/blue_print.md`
 2. `docs/ux.md`
 3. `docs/specs/README.md`
@@ -14,6 +16,7 @@ The project goal is to build a **Rule-Based API Mocking Engine** with stateful b
 Do not start implementation without completing this reading order.
 
 ## 3) Design: location and source of truth
+
 - UI v2 canonical source: `docs/desing/` assets (`system_consistency_board`, app shell, and screen/state exports).
 - Legacy node mapping is documented in `docs/systemDesign.md`; do not reuse historical markup/style patterns for UI v2 implementation.
 - Mandatory v2 design reading sequence:
@@ -24,6 +27,7 @@ Do not start implementation without completing this reading order.
 - If historical mapping notes and `docs/desing` differ for UI v2, **prioritize `docs/desing`** as visual source of truth.
 
 ## 4) Non-negotiable engineering policy
+
 - Always prioritize correct, simple, and maintainable code.
 - Good engineering practices and clean design are above quick patches.
 - If a solution is flawed by design and can be rebuilt quickly in a simpler, better way, **rebuild is mandatory**.
@@ -32,6 +36,7 @@ Do not start implementation without completing this reading order.
 - When existing code is low quality or structurally flawed, the default decision is to propose and implement root-cause corrections/refactoring instead of layering patches on top of bad foundations.
 
 ## 5) Rules to start implementation
+
 - Do not start coding without a spec in `Ready` status.
 - Every status change must be updated in:
   - the spec file
@@ -39,25 +44,30 @@ Do not start implementation without completing this reading order.
 - Official status flow: `Draft -> Ready -> In Progress -> Done`.
 
 ## 6) Base technical conventions
+
 ### Frontend
+
 - `feature-first` architecture.
 - Clear separation between `app`, `features`, and `shared`.
 - Strict TypeScript (`strict`) and equivalent safety flags enabled.
 - Typed contracts and reusable components before ad-hoc variations.
 
 ### Go backend
+
 - Simplified Ports/Adapters architecture (simplified hexagonal), initially focused on DB connectivity and persistence.
 - Application layer must not depend on SQLite directly.
 - HTTP handlers must not access DB directly.
 - Rollback must use compensation events; physical deletion from event store is forbidden.
 
 ## 7) Mandatory language policy
+
 - All code must be written in English.
 - All code comments must be written in English.
 - All documentation (including specs and agent docs) must be written in English.
 - Identifiers, API contracts, and user-facing technical copy in this repository must default to English unless explicitly documented otherwise.
 
 ## 8) Mandatory process before starting and closing a spec
+
 - Before starting any spec, analyze the full spec content and all dependencies.
 - If there are doubts, ask and resolve them before starting implementation.
 - Do not start implementation with open or ambiguous points in a spec.
@@ -69,15 +79,18 @@ Do not start implementation without completing this reading order.
   - technical/functional impact details
 
 ## 9) Canonical references
+
 - `docs/blue_print.md`
 - `docs/ux.md`
 - `docs/specs/README.md`
 
 ## 10) Mandatory tool usage
+
 - For visual validation/checks, always use `agent-browser`.
 - For versions, documentation, and technical reference information, always use Context7 MCP as the primary source.
 
 ## 11) Mandatory DoD for UI v2
+
 - Every screen/view/component is blocked by an exhaustive visual DoD before acceptance.
 - Mandatory checks include: typography, colors, spacing, overlaps/clipping, hierarchy, interaction states, and responsive behavior.
 - Mandatory viewport set for UI v2 visual QA: `375`, `768`, `1280`, `1920`.
@@ -89,6 +102,7 @@ Do not start implementation without completing this reading order.
 - Any critical or high UI finding fails the bundle gate.
 
 ## 12) UI Action Affordance Style Guide
+
 - Prefer icon-only actions (with tooltip) for contextual or row-level actions whenever feasible.
 - Contextual and row/card actions labeled `Open` or `Edit` must be icon-only actions with tooltip and `aria-label`. Do not render textual `Open`/`Edit` buttons in those contexts.
 - Use concise text buttons for primary/global actions (`Save`, `Publish`, `Create`, `Submit`) where label clarity is critical.
