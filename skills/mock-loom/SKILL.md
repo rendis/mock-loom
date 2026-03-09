@@ -4,8 +4,9 @@ description: >-
   Interact with mock-loom Rule-Based API Mocking Engine via MCP tools.
   Set up workspaces, integrations, packs, endpoint contracts and scenarios,
   data sources, send mock requests, and debug entity state with timeline/rollback.
-  Use when working with mock-loom, API mocking, or when the user asks to
-  create, test, or manage mock endpoints.
+  Use when working with mock-loom, API mocking, API simulation, mock server,
+  route import from OpenAPI/Postman/cURL, entity rollback, traffic logs,
+  or when the user asks to create, test, inspect, or manage mock endpoints.
 allowed-tools:
   - mcp__mock-loom__*
 ---
@@ -14,12 +15,27 @@ allowed-tools:
 
 MCP integration for the mock-loom Rule-Based API Mocking Engine.
 
-## Prerequisites
+## Setup
 
-1. **API must be running**: `make run-dummy` (dummy auth, port 18081)
-2. **MCP binary must be built**: `make build-mcp`
-3. **MCP config**: `.mcp.json` at project root configures Claude Code to spawn the MCP server
-4. **OIDC mode**: if the API uses OIDC, run `./apps/mcp/bin/mock-loom-mcp login` first to authenticate via browser. Tokens are stored in `~/.mock-loom/tokens.json` and auto-refresh.
+### Dummy Auth (development)
+
+```bash
+make run-dummy    # Start API on port 18081 (no credentials needed)
+make build-mcp    # Build MCP binary
+```
+
+`.mcp.json` at project root configures Claude Code to spawn the MCP server with `MOCK_LOOM_AUTH_TOKEN=dummy-token`.
+
+### OIDC (production)
+
+```bash
+make build-mcp                          # Build MCP binary
+./apps/mcp/bin/mock-loom-mcp login      # Open browser → OIDC login
+./apps/mcp/bin/mock-loom-mcp status     # Verify token is valid
+./apps/mcp/bin/mock-loom-mcp logout     # Clear stored tokens
+```
+
+Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC tokens from `~/.mock-loom/tokens.json` instead. Tokens auto-refresh via refresh token.
 
 ## Quick Start Workflow
 
