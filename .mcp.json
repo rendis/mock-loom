@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "mock-loom": {
+      "command": "./apps/mcp/bin/mock-loom-mcp",
+      "args": [],
+      "env": {
+        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
+        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
+      }
+    }
+  }
+}
