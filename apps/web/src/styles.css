@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Manrope:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface-base: 243 245 249;
+  --surface-raised: 255 255 255;
+  --surface-soft: 239 243 249;
+  --surface-inset: 233 237 244;
+  --text: 22 32 56;
+  --muted: 82 97 121;
+  --border: 214 223 236;
+  --primary: 67 81 176;
+  --primary-dark: 49 60 133;
+  --focus: 67 81 176;
+  --success: 21 128 61;
+  --success-dark: 22 101 52;
+  --warning: 180 83 9;
+  --warning-dark: 146 64 14;
+  --error: 214 31 31;
+  --error-dark: 185 28 28;
+  --info: 30 64 175;
+  --info-dark: 30 58 138;
+  --neo-shadow-light: rgba(255, 255, 255, 0.9);
+  --neo-shadow-dark: rgba(15, 23, 42, 0.14);
+  --neo-shadow-press-light: rgba(255, 255, 255, 0.68);
+  --neo-shadow-press-dark: rgba(15, 23, 42, 0.18);
+}
+
+html {
+  background: rgb(var(--surface-base));
+}
+
+html body[data-select-open='true'][data-scroll-locked][data-scroll-locked] {
+  overflow-y: scroll !important;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: rgb(var(--surface-base));
+  color: rgb(var(--text));
+  line-height: 1.4;
+}
+
+.neo-soft {
+  box-shadow: 1px 1px 3px var(--neo-shadow-dark), -1px -1px 3px var(--neo-shadow-light);
+}
+
+.neo-press {
+  box-shadow: inset 1px 1px 3px var(--neo-shadow-press-dark), inset -1px -1px 3px var(--neo-shadow-press-light);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.screen-b-font {
+  font-family: 'Manrope', 'Inter', system-ui, sans-serif;
+}
+
+.monaco-editor .suggest-widget {
+  border: 1px solid rgb(var(--border)) !important;
+  background: rgb(var(--surface-raised)) !important;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22) !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row {
+  color: rgb(var(--text)) !important;
+}
+
+.monaco-editor .suggest-widget .monaco-list-row.focused,
+.monaco-editor .suggest-widget .monaco-list-row.selected {
+  background: rgb(var(--surface-soft)) !important;
+}
