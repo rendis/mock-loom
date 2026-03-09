@@ -1,0 +1,1336 @@
+openapi: 3.0.3
+info:
+  title: Mock Loom API
+  version: 1.0.0
+  description: OIDC-enabled API mocking management plane with workspace segmentation.
+servers:
+  - url: /api/v1
+paths:
+  /auth/config:
+    get:
+      summary: Get frontend auth runtime configuration
+      operationId: getAuthConfig
+      responses:
+        '200':
+          description: Auth config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthConfig'
+  /auth/me:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get authenticated user profile
+      operationId: getAuthMe
+      responses:
+        '200':
+          description: Me payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/logout:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Logout current session
+      operationId: postAuthLogout
+      responses:
+        '204':
+          description: Logged out
+  /workspaces:
+    get:
+      security:
+        - bearerAuth: []
+      summary: List workspaces
+      operationId: listWorkspaces
+      responses:
+        '200':
+          description: Workspace list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Workspace'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create workspace
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '201':
+          description: Created workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+  /workspaces/{workspaceId}:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get workspace by ID
+      operationId: getWorkspace
+      responses:
+        '200':
+          description: Workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update workspace
+      operationId: patchWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+      responses:
+        '200':
+          description: Updated workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+    delete:
+      security:
+        - bearerAuth: []
+      summary: Archive workspace
+      operationId: deleteWorkspace
+      responses:
+        '204':
+          description: Workspace archived
+  /workspaces/{workspaceId}/members:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List workspace members
+      operationId: listWorkspaceMembers
+      responses:
+        '200':
+          description: Member list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkspaceMember'
+  /workspaces/{workspaceId}/members/invitations:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Invite member by email
+      operationId: inviteWorkspaceMember
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberRequest'
+      responses:
+        '201':
+          description: Invitation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceMember'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /workspaces/{workspaceId}/members/{memberId}/role:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/MemberId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update member role
+      operationId: patchWorkspaceMemberRole
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '204':
+          description: Role updated
+  /workspaces/{workspaceId}/members/{memberId}/status:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+      - $ref: '#/components/parameters/MemberId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update member status
+      operationId: patchWorkspaceMemberStatus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberStatusRequest'
+      responses:
+        '204':
+          description: Status updated
+  /workspaces/{workspaceId}/integrations:
+    parameters:
+      - $ref: '#/components/parameters/WorkspaceId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List integrations by workspace
+      operationId: listWorkspaceIntegrations
+      responses:
+        '200':
+          description: Integration list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Integration'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create integration in workspace
+      operationId: createWorkspaceIntegration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIntegrationRequest'
+      responses:
+        '201':
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Integration'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /integrations/{integrationId}/overview:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get integration overview
+      operationId: getIntegrationOverview
+      responses:
+        '200':
+          description: Overview payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  integration:
+                    $ref: '#/components/schemas/Integration'
+                  routeCount:
+                    type: integer
+                  last24hRequests:
+                    type: integer
+                  errorRate:
+                    type: number
+  /integrations/{integrationId}/auth:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update integration auth mode
+      operationId: patchIntegrationAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIntegrationAuthRequest'
+      responses:
+        '204':
+          description: Auth mode updated
+  /integrations/{integrationId}/packs:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List integration packs
+      operationId: getIntegrationPacks
+      responses:
+        '200':
+          description: Pack list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationPack'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create integration pack
+      operationId: createIntegrationPack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePackRequest'
+      responses:
+        '201':
+          description: Pack created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationPack'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /integrations/{integrationId}/packs/{packId}:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update integration pack
+      operationId: patchIntegrationPack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePackRequest'
+      responses:
+        '200':
+          description: Pack updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationPack'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/routes:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List routes in one pack
+      operationId: getIntegrationPackRoutes
+      responses:
+        '200':
+          description: Route list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationRoute'
+  /integrations/{integrationId}/packs/{packId}/imports:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Import routes into one pack
+      operationId: postIntegrationPackImport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRoutesRequest'
+      responses:
+        '200':
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportRoutesResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/data-sources:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List integration data sources
+      operationId: getIntegrationDataSources
+      responses:
+        '200':
+          description: Data source list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DataSource'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create integration data source
+      operationId: createIntegrationDataSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDataSourceRequest'
+      responses:
+        '201':
+          description: Data source created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+  /integrations/{integrationId}/data-sources/{sourceId}:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/SourceId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update integration data source
+      operationId: patchIntegrationDataSource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDataSourceRequest'
+      responses:
+        '200':
+          description: Data source updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataSource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    delete:
+      security:
+        - bearerAuth: []
+      summary: Delete integration data source
+      operationId: deleteIntegrationDataSource
+      responses:
+        '204':
+          description: Data source deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /integrations/{integrationId}/data-sources/{sourceId}/baseline:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/SourceId'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Upload data source baseline file
+      operationId: postDataSourceBaseline
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                parser:
+                  type: string
+                  deprecated: true
+                  description: Legacy parser hint kept for backward compatibility.
+                csvDelimiter:
+                  type: string
+                  description: Optional CSV delimiter. Accepted aliases are `comma`, `semicolon`, `tab`, and `pipe`.
+      responses:
+        '200':
+          description: Baseline uploaded and ingested
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadBaselineResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get endpoint editor payload
+      operationId: getIntegrationPackEndpoint
+      responses:
+        '200':
+          description: Endpoint payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Endpoint'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/autocomplete-context:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get endpoint runtime autocomplete context
+      operationId: getIntegrationPackEndpointAutocompleteContext
+      responses:
+        '200':
+          description: Runtime autocomplete context
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutocompleteContext'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/validate:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Validate endpoint contract and scenarios
+      operationId: postIntegrationPackEndpointValidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateEndpointRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndpointValidationResult'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/revisions:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: List endpoint revisions
+      operationId: getIntegrationPackEndpointRevisions
+      responses:
+        '200':
+          description: Endpoint revision list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EndpointRevision'
+                  nextCursor:
+                    type: string
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/revisions/{revisionId}/restore:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+      - $ref: '#/components/parameters/RevisionId'
+    post:
+      security:
+        - bearerAuth: []
+      summary: Restore endpoint revision
+      operationId: postIntegrationPackEndpointRevisionRestore
+      responses:
+        '200':
+          description: Revision restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestoreEndpointRevisionResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/route:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update endpoint method and relative path
+      operationId: patchIntegrationPackEndpointRoute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEndpointRouteRequest'
+      responses:
+        '200':
+          description: Endpoint route updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationRoute'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/auth:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    patch:
+      security:
+        - bearerAuth: []
+      summary: Update endpoint auth mode and optional override
+      operationId: patchIntegrationPackEndpointAuth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEndpointAuthRequest'
+      responses:
+        '200':
+          description: Endpoint auth updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  packId:
+                    type: string
+                  authMode:
+                    type: string
+                  authOverridePolicyJson:
+                    type: string
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/contract:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    put:
+      security:
+        - bearerAuth: []
+      summary: Update endpoint contract
+      operationId: putIntegrationPackEndpointContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateContractRequest'
+      responses:
+        '204':
+          description: Contract updated
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/scenarios:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    put:
+      security:
+        - bearerAuth: []
+      summary: Update endpoint scenarios
+      operationId: putIntegrationPackEndpointScenarios
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScenariosRequest'
+      responses:
+        '204':
+          description: Scenarios updated
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /integrations/{integrationId}/packs/{packId}/endpoints/{endpointId}/traffic:
+    parameters:
+      - $ref: '#/components/parameters/IntegrationId'
+      - $ref: '#/components/parameters/PackId'
+      - $ref: '#/components/parameters/EndpointId'
+    get:
+      security:
+        - bearerAuth: []
+      summary: Get endpoint traffic
+      operationId: getIntegrationPackEndpointTraffic
+      responses:
+        '200':
+          description: Traffic list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TrafficEvent'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      schema:
+        type: string
+    MemberId:
+      name: memberId
+      in: path
+      required: true
+      schema:
+        type: string
+    IntegrationId:
+      name: integrationId
+      in: path
+      required: true
+      schema:
+        type: string
+    PackId:
+      name: packId
+      in: path
+      required: true
+      schema:
+        type: string
+    EndpointId:
+      name: endpointId
+      in: path
+      required: true
+      schema:
+        type: string
+    RevisionId:
+      name: revisionId
+      in: path
+      required: true
+      schema:
+        type: string
+    SourceId:
+      name: sourceId
+      in: path
+      required: true
+      schema:
+        type: string
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PayloadTooLarge:
+      description: Payload too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Semantic validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+    AuthConfig:
+      type: object
+      properties:
+        dummyAuth:
+          type: boolean
+        panelProvider:
+          type: object
+          properties:
+            name: {type: string}
+            issuer: {type: string}
+            discoveryUrl: {type: string}
+            discovery_url: {type: string}
+            jwksUrl: {type: string}
+            jwks_url: {type: string}
+            authorizationEndpoint: {type: string}
+            authorization_endpoint: {type: string}
+            tokenEndpoint: {type: string}
+            token_endpoint: {type: string}
+            userinfoEndpoint: {type: string}
+            userinfo_endpoint: {type: string}
+            endSessionEndpoint: {type: string}
+            end_session_endpoint: {type: string}
+            clientId: {type: string}
+            client_id: {type: string}
+            audience: {type: string}
+            scopes: {type: string}
+    Me:
+      type: object
+      properties:
+        id: {type: string}
+        email: {type: string}
+        fullName: {type: string}
+        status: {type: string}
+        systemRole:
+          type: string
+          enum: [SUPERADMIN, PLATFORM_ADMIN]
+    CreateWorkspaceRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string}
+        metadata: {type: string, description: JSON string}
+    UpdateWorkspaceRequest:
+      type: object
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string}
+        metadata: {type: string, description: JSON string}
+    Workspace:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string}
+        metadata_json: {type: string}
+        status:
+          type: string
+          enum: [ACTIVE, ARCHIVED]
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    InviteMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email: {type: string, format: email}
+        fullName: {type: string}
+        role:
+          type: string
+          enum: [ADMIN, EDITOR, VIEWER]
+    UpdateMemberRoleRequest:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [ADMIN, EDITOR, VIEWER]
+    UpdateMemberStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, ACTIVE]
+    WorkspaceMember:
+      type: object
+      properties:
+        id: {type: string}
+        workspace_id: {type: string}
+        user_id: {type: string}
+        user_email: {type: string}
+        user_full_name: {type: string}
+        role:
+          type: string
+          enum: [OWNER, ADMIN, EDITOR, VIEWER]
+        membership_status:
+          type: string
+          enum: [PENDING, ACTIVE]
+        invited_by: {type: string}
+        joined_at: {type: string, format: date-time}
+        created_at: {type: string, format: date-time}
+    CreateIntegrationRequest:
+      type: object
+      required: [name, slug, baseUrl]
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        baseUrl: {type: string}
+    Integration:
+      type: object
+      properties:
+        id: {type: string}
+        workspace_id: {type: string}
+        name: {type: string}
+        slug: {type: string}
+        base_url: {type: string}
+        auth_mode: {type: string}
+        status: {type: string}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    IntegrationPack:
+      type: object
+      properties:
+        id: {type: string}
+        integration_id: {type: string}
+        name: {type: string}
+        slug: {type: string}
+        base_path: {type: string}
+        status: {type: string}
+        routeCount: {type: integer}
+        authEnabled: {type: boolean}
+        authType: {type: string}
+        authPolicy:
+          $ref: '#/components/schemas/AuthMockPolicy'
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    CreatePackRequest:
+      type: object
+      required: [name, slug, basePath]
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        basePath: {type: string}
+    UpdatePackRequest:
+      type: object
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        basePath: {type: string}
+        status: {type: string}
+        authEnabled: {type: boolean}
+        authPolicy:
+          $ref: '#/components/schemas/AuthMockPolicyInput'
+    UpdateIntegrationAuthRequest:
+      type: object
+      required: [authMode]
+      properties:
+        authMode: {type: string}
+    IntegrationRoute:
+      type: object
+      properties:
+        id: {type: string}
+        pack_id: {type: string}
+        method: {type: string}
+        path: {type: string}
+        auth_mode: {type: string}
+    DataSourceStatus:
+      type: string
+      enum: [ACTIVE, PENDING, ERROR]
+    DataSource:
+      type: object
+      properties:
+        id: {type: string}
+        integration_id: {type: string}
+        name: {type: string}
+        slug: {type: string}
+        kind:
+          type: string
+          enum: [CSV, JSON]
+        status:
+          $ref: '#/components/schemas/DataSourceStatus'
+        last_sync_at: {type: string, format: date-time}
+        record_count: {type: integer}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    CreateDataSourceRequest:
+      type: object
+      required: [name, slug, kind]
+      properties:
+        name: {type: string}
+        slug: {type: string}
+        kind:
+          type: string
+          enum: [CSV, JSON]
+    UpdateDataSourceRequest:
+      type: object
+      required: [name, slug]
+      properties:
+        name: {type: string}
+        slug: {type: string}
+    UploadBaselineResponse:
+      type: object
+      required: [sourceId, snapshotId, recordCount, status]
+      properties:
+        sourceId: {type: string}
+        snapshotId: {type: string}
+        recordCount: {type: integer}
+        status:
+          $ref: '#/components/schemas/DataSourceStatus'
+    ImportRoutesRequest:
+      type: object
+      required: [sourceType, payload]
+      properties:
+        sourceType:
+          type: string
+          enum: [OPENAPI, POSTMAN, CURL]
+        payload:
+          type: string
+    ImportRoutesResult:
+      type: object
+      required:
+        - sourceType
+        - createdRoutes
+        - updatedRoutes
+        - skippedRoutes
+        - warnings
+        - errors
+      properties:
+        sourceType: {type: string}
+        createdRoutes: {type: integer}
+        updatedRoutes: {type: integer}
+        skippedRoutes: {type: integer}
+        warnings:
+          type: array
+          items: {type: string}
+        errors:
+          type: array
+          items: {type: string}
+    Endpoint:
+      type: object
+      properties:
+        id: {type: string}
+        integration_id: {type: string}
+        pack_id: {type: string}
+        method: {type: string}
+        path: {type: string}
+        auth_mode: {type: string}
+        auth_override_policy_json: {type: string}
+        contract_json: {type: string}
+        scenarios_json: {type: string}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    AutocompleteContext:
+      type: object
+      properties:
+        requestPaths:
+          type: array
+          items:
+            type: string
+        sourcePaths:
+          type: array
+          items:
+            type: string
+        functions:
+          type: array
+          items:
+            type: string
+        templatePaths:
+          type: array
+          items:
+            type: string
+    UpdateContractRequest:
+      type: object
+      required: [contract]
+      properties:
+        contract:
+          type: string
+    ValidateEndpointRequest:
+      type: object
+      properties:
+        contract:
+          type: string
+        scenarios:
+          type: string
+    EndpointValidationIssue:
+      type: object
+      properties:
+        code: {type: string}
+        message: {type: string}
+        path: {type: string}
+        severity: {type: string}
+    EndpointValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/EndpointValidationIssue'
+    EndpointRevision:
+      type: object
+      properties:
+        id: {type: string}
+        integration_id: {type: string}
+        endpoint_id: {type: string}
+        contract_json: {type: string}
+        scenarios_json: {type: string}
+        restored_from_revision_id: {type: string}
+        created_at: {type: string, format: date-time}
+    RestoreEndpointRevisionResponse:
+      type: object
+      properties:
+        endpointId: {type: string}
+        revisionId: {type: string}
+        restoredAt: {type: string, format: date-time}
+    UpdateEndpointRouteRequest:
+      type: object
+      required: [method, relativePath]
+      properties:
+        method: {type: string}
+        relativePath: {type: string}
+    AuthMockHeaderRule:
+      type: object
+      required: [name, operator]
+      properties:
+        name: {type: string}
+        operator:
+          type: string
+          enum: [EXISTS, EQUALS, CONTAINS]
+        value: {type: string}
+    AuthMockOIDCConfig:
+      type: object
+      properties:
+        issuer: {type: string}
+        jwksUrl: {type: string}
+        audience: {type: string}
+        emailClaim: {type: string}
+    AuthMockPrebuiltPolicy:
+      type: object
+      properties:
+        denyAll: {type: boolean}
+        tokenEquals: {type: string}
+        emailEquals: {type: string}
+        emailContains: {type: string}
+        emailInList:
+          type: array
+          items:
+            type: string
+        requiredHeaders:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthMockHeaderRule'
+        oidc:
+          $ref: '#/components/schemas/AuthMockOIDCConfig'
+    AuthMockPolicyInput:
+      type: object
+      required: [mode, prebuilt]
+      properties:
+        mode:
+          type: string
+          enum: [PREBUILT, CUSTOM_EXPR]
+        prebuilt:
+          $ref: '#/components/schemas/AuthMockPrebuiltPolicy'
+        customExpr:
+          type: string
+    AuthMockPolicy:
+      type: object
+      required: [mode, prebuilt]
+      properties:
+        mode:
+          type: string
+          enum: [PREBUILT, CUSTOM_EXPR]
+        prebuilt:
+          $ref: '#/components/schemas/AuthMockPrebuiltPolicy'
+        customExpr:
+          type: string
+    UpdateEndpointAuthRequest:
+      type: object
+      required: [authMode]
+      properties:
+        authMode:
+          type: string
+          enum: [INHERIT, OVERRIDE, NONE]
+        overridePolicy:
+          $ref: '#/components/schemas/AuthMockPolicyInput'
+    UpdateScenariosRequest:
+      type: object
+      required: [scenarios]
+      properties:
+        scenarios:
+          type: string
+          description: JSON string representing an array of `StrictScenario` items.
+    StrictScenario:
+      type: object
+      additionalProperties: false
+      required: [priority, conditionExpr, response]
+      properties:
+        name:
+          type: string
+        priority:
+          type: integer
+          minimum: 1
+        conditionExpr:
+          type: string
+        response:
+          $ref: '#/components/schemas/StrictScenarioResponse'
+        mutations:
+          type: array
+          items:
+            $ref: '#/components/schemas/StrictScenarioMutation'
+    StrictScenarioResponse:
+      type: object
+      additionalProperties: false
+      required: [statusCode, delayMs, headers, body]
+      properties:
+        statusCode:
+          type: integer
+          minimum: 100
+          maximum: 599
+        delayMs:
+          type: integer
+          minimum: 0
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: object
+          additionalProperties: true
+    StrictScenarioMutationUpsert:
+      type: object
+      additionalProperties: false
+      required: [type, sourceSlug, entityIdExpr, payloadExpr]
+      properties:
+        type:
+          type: string
+          enum: [UPSERT]
+        sourceSlug:
+          type: string
+        entityIdExpr:
+          type: string
+        payloadExpr:
+          type: string
+    StrictScenarioMutationDelete:
+      type: object
+      additionalProperties: false
+      required: [type, sourceSlug, entityIdExpr]
+      properties:
+        type:
+          type: string
+          enum: [DELETE]
+        sourceSlug:
+          type: string
+        entityIdExpr:
+          type: string
+    StrictScenarioMutation:
+      oneOf:
+        - $ref: '#/components/schemas/StrictScenarioMutationUpsert'
+        - $ref: '#/components/schemas/StrictScenarioMutationDelete'
+    ValidationError:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+    TrafficEvent:
+      type: object
+      properties:
+        id: {type: string}
+        integration_id: {type: string}
+        endpoint_id: {type: string}
+        request_summary_json: {type: string}
+        matched_scenario: {type: string}
+        created_at: {type: string, format: date-time}
