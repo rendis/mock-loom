@@ -1,0 +1,11 @@
+{
+  "name": "mock-loom",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "pnpm --filter @mock-loom/web build",
+    "dev": "pnpm --filter @mock-loom/web dev",
+    "test": "pnpm --filter @mock-loom/web test",
+    "typecheck": "pnpm --filter @mock-loom/web typecheck"
+  }
+}
