@@ -199,7 +199,14 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white shadow-card">::</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-card">
+                <svg width="22" height="22" viewBox="6 4 24 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M10 12 L18 8 L26 12 L26 24 L18 28 L10 24 Z" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinejoin="round"/>
+                  <line x1="18" y1="8" x2="18" y2="28" stroke="#fff" strokeWidth="1" opacity="0.5"/>
+                  <line x1="10" y1="12" x2="26" y2="24" stroke="#fff" strokeWidth="1" opacity="0.5"/>
+                  <line x1="26" y1="12" x2="10" y2="24" stroke="#fff" strokeWidth="1" opacity="0.5"/>
+                </svg>
+              </div>
               <p className="text-xl font-semibold text-text">Mock Loom</p>
               <button
                 className="ml-1 inline-flex min-w-0 items-center gap-2 rounded-xl border border-border bg-surface-soft px-3 py-2 text-left transition-colors hover:bg-surface-inset"

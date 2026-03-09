@@ -1,5 +1,5 @@
 ---
-name: mock-loom-mcp
+name: mock-loom
 description: >-
   Interact with mock-loom Rule-Based API Mocking Engine via MCP tools.
   Set up workspaces, integrations, packs, endpoint contracts and scenarios,
