@@ -388,17 +388,6 @@ export function OverviewRoutingScreen(): JSX.Element {
             <h1 className="text-4xl font-extrabold tracking-tight text-text">Integration Overview</h1>
             <p className="mt-2 text-lg text-muted">Manage API routes, monitor latency, and configure mock responses.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="success">System Operational</Badge>
-            <button
-              aria-label="Toggle theme"
-              className="inline-flex h-9 w-12 items-center rounded-full border border-border bg-surface-raised p-1"
-              onClick={() => document.documentElement.classList.toggle('dark')}
-              type="button"
-            >
-              <span className="h-7 w-7 rounded-full bg-surface-soft shadow-sm dark:translate-x-3 dark:bg-surface-inset" />
-            </button>
-          </div>
         </header>
 
         {bannerMessage ? (
