@@ -172,8 +172,13 @@ func ValidateScenariosJSONWithOptions(scenariosJSON string, options ScenarioVali
 		bodyRaw, bodyExists := responseObject["body"]
 		if !bodyExists {
 			messages = append(messages, fmt.Sprintf("scenario[%d].response.body is required", idx))
-		} else if _, ok := bodyRaw.(map[string]any); !ok {
-			messages = append(messages, fmt.Sprintf("scenario[%d].response.body must be a JSON object", idx))
+		} else {
+			switch bodyRaw.(type) {
+			case map[string]any, string:
+				// valid: JSON object or raw string
+			default:
+				messages = append(messages, fmt.Sprintf("scenario[%d].response.body must be a JSON object or a string", idx))
+			}
 		}
 
 		mutationsRaw, mutationsExists := entry["mutations"]

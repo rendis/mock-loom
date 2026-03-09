@@ -113,9 +113,9 @@ function compileResponse(draft: ScenarioDraft, diagnostics: ScenarioDiagnostic[]
   }
 
   const bodyParsed = safeParseJSON(draft.response.bodyJson)
-  if (!isObject(bodyParsed)) {
+  if (!isObject(bodyParsed) && typeof bodyParsed !== 'string') {
     diagnostics.push(
-      diagnostic(draft.id, 'response.body', 'scenario.validation.response-body', 'Response body must be a valid JSON object.')
+      diagnostic(draft.id, 'response.body', 'scenario.validation.response-body', 'Response body must be a valid JSON object or a string.')
     )
   }
 
@@ -128,7 +128,7 @@ function compileResponse(draft: ScenarioDraft, diagnostics: ScenarioDiagnostic[]
     statusCode: Number.isInteger(statusCode) ? statusCode : 200,
     delayMs: Number.isInteger(delayMs) && delayMs >= 0 ? delayMs : 0,
     headers: sortRecord(headersParsed),
-    body: isObject(bodyParsed) ? bodyParsed : { ok: true },
+    body: isObject(bodyParsed) || typeof bodyParsed === 'string' ? bodyParsed : { ok: true },
   }
 }
 

@@ -245,6 +245,9 @@ function normalizeBody(raw: unknown): unknown {
   if (isObject(raw)) {
     return raw
   }
+  if (typeof raw === 'string') {
+    return raw
+  }
   if (Array.isArray(raw)) {
     return { data: raw }
   }
@@ -255,6 +258,9 @@ function normalizeBody(raw: unknown): unknown {
 }
 
 function stringifyObject(value: unknown, fallback: string): string {
+  if (typeof value === 'string') {
+    return JSON.stringify(value)
+  }
   if (isObject(value)) {
     return JSON.stringify(value, null, 2)
   }

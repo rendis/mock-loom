@@ -123,46 +123,100 @@ Scenarios are priority-ordered condition→response rules:
   {
     "name": "Get user by ID",
     "priority": 1,
-    "conditionExpr": "request.method == 'GET' && request.pathParams.id != ''",
+    "conditionExpr": "request.params.path.id != ''",
     "response": {
-      "status": 200,
+      "statusCode": 200,
+      "delayMs": 0,
       "headers": {"Content-Type": "application/json"},
-      "bodyTemplate": "{\"id\": \"{{request.pathParams.id}}\", \"name\": \"John\"}"
-    },
-    "mutations": []
+      "body": {"id": "u-1", "name": "John"}
+    }
   },
   {
     "name": "Fallback",
     "priority": 99,
     "conditionExpr": "true",
     "response": {
-      "status": 404,
+      "statusCode": 404,
+      "delayMs": 0,
       "headers": {"Content-Type": "application/json"},
-      "bodyTemplate": "{\"error\": \"not found\"}"
+      "body": {"error": "not found"}
     }
   }
 ]
 ```
 
+### String response body
+
+`response.body` accepts a JSON object or a string. String bodies are sent as raw bytes — use `response.headers` to set Content-Type:
+
+```json
+{
+  "name": "HTML response",
+  "priority": 10,
+  "conditionExpr": "request.body.accion == 'buscarAlumno'",
+  "response": {
+    "statusCode": 200,
+    "delayMs": 0,
+    "headers": {"Content-Type": "text/html; charset=utf-8"},
+    "body": "<html><body><table><tr><td>26075524</td><td>JUAN PEREZ</td></tr></table></body></html>"
+  }
+}
+```
+
+- JSON object → serialized as JSON, auto Content-Type `application/json`
+- String → raw bytes, default Content-Type `text/plain; charset=utf-8` (override via headers)
+- null/omitted → no body
+
 ## Expression Language (expr-lang)
 
-Scenarios use `expr-lang/expr` for conditions and templates:
+Scenarios use `expr-lang/expr` for conditions and mutations.
 
 ### Available Context Variables
+
+**request** (top-level aliases + params):
 - `request.method` — HTTP method
-- `request.path` — Request path
-- `request.pathParams.<name>` — Path parameters
+- `request.path` — Full request path
+- `request.header.<name>` — Request headers (lowercase keys)
 - `request.query.<name>` — Query parameters
-- `request.headers.<name>` — Request headers (lowercase keys)
-- `request.body` — Parsed JSON body
-- `ds.<slug>` — Data source entities by slug
+- `request.body` — Parsed request body (see below)
+- `request.params.path.<name>` — Path parameters (e.g. `{userId}` or `:userId`)
+- `request.params.query.<name>` — Query parameters (alias)
+- `request.params.headers.<name>` — Headers (alias)
+- `request.params.body` — Body (alias)
+
+**source** (data source entities):
+- `source.<slug>` — Array of all entities for a data source
+- `source.<slug>_by_id` — Map of entities indexed by ID
+
+**auth** (authentication context):
+- `auth.token` — Raw auth token
+- `auth.email` — Authenticated email
+- `auth.claims` — Token claims map
+- `auth.headers` — Auth-related headers
+
+### Request Body Parsing
+
+Body parsing depends on `Content-Type`:
+
+| Content-Type | `request.body` type | Example |
+|---|---|---|
+| `application/json` | Parsed JSON (object, array, etc.) | `request.body.name` |
+| `application/x-www-form-urlencoded` | Map of field→string (first value per key) | `request.body.accion` |
+| Other / missing | Raw string or JSON attempt | — |
+
+Form-urlencoded example — request body `accion=buscar&txtRun=26075524`:
+```
+request.body.accion == "buscar" && request.body.txtRun == "26075524"
+```
 
 ### Common Patterns
 ```
 request.method == 'POST'
 request.body.name != ''
-len(ds.users) > 0
-request.pathParams.id in map(ds.users, {.id})
+request.params.path.id != ''
+len(source.users) > 0
+source.users_by_id[request.params.path.id] != nil
+request.body.accion == "buscarAlumno"
 ```
 
 ## Known API Behaviors

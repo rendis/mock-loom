@@ -81,7 +81,7 @@ func TestValidateScenariosJSON(t *testing.T) {
 			payload: `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"application/json"},"body":{"ok":true}},"legacy":"x"}]`,
 		},
 		{
-			name:    "response body must be object",
+			name:    "response body must be object or string",
 			payload: `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"application/json"},"body":[1,2,3]}}]`,
 		},
 		{
@@ -127,4 +127,38 @@ func TestValidateScenariosJSONWithOptionsRequiresKnownSourceSlug(t *testing.T) {
 	if _, err := ValidateScenariosJSONWithOptions(invalid, options); err == nil {
 		t.Fatal("expected unknown source slug validation error")
 	}
+}
+
+func TestValidateScenariosJSONStringResponseBody(t *testing.T) {
+	t.Run("string body passes validation", func(t *testing.T) {
+		payload := `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"text/html; charset=utf-8"},"body":"<html><body>hello</body></html>"}}]`
+		normalized, err := ValidateScenariosJSON(payload)
+		if err != nil {
+			t.Fatalf("expected string body to be valid, got error: %v", err)
+		}
+		if normalized == "" {
+			t.Fatal("expected normalized payload")
+		}
+	})
+
+	t.Run("object body still valid", func(t *testing.T) {
+		payload := `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"application/json"},"body":{"ok":true}}}]`
+		if _, err := ValidateScenariosJSON(payload); err != nil {
+			t.Fatalf("expected object body to remain valid, got error: %v", err)
+		}
+	})
+
+	t.Run("array body still rejected", func(t *testing.T) {
+		payload := `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"application/json"},"body":[1,2,3]}}]`
+		if _, err := ValidateScenariosJSON(payload); err == nil {
+			t.Fatal("expected array body to be rejected")
+		}
+	})
+
+	t.Run("number body rejected", func(t *testing.T) {
+		payload := `[{"priority":1,"conditionExpr":"true","response":{"statusCode":200,"delayMs":0,"headers":{"Content-Type":"application/json"},"body":42}}]`
+		if _, err := ValidateScenariosJSON(payload); err == nil {
+			t.Fatal("expected number body to be rejected")
+		}
+	})
 }

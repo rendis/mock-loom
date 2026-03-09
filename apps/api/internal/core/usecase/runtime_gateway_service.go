@@ -112,7 +112,7 @@ func (s *RuntimeGatewayService) Execute(ctx context.Context, input RuntimeExecut
 		return nil, err
 	}
 
-	requestBody := decodeRuntimeRequestBody(input.BodyRaw)
+	requestBody := decodeRuntimeRequestBody(input.BodyRaw, input.Headers["content-type"])
 	sourceEnv, err := s.buildRuntimeSourceEnv(ctx, input.IntegrationID)
 	if err != nil {
 		return nil, err
@@ -743,16 +743,40 @@ func mapRuntimeQuery(values url.Values) map[string]any {
 	return result
 }
 
-func decodeRuntimeRequestBody(raw []byte) any {
+func decodeRuntimeRequestBody(raw []byte, contentType string) any {
 	trimmed := strings.TrimSpace(string(raw))
 	if trimmed == "" {
 		return map[string]any{}
+	}
+	if isFormURLEncoded(contentType) {
+		return decodeFormBody(trimmed)
 	}
 	var parsed any
 	if err := json.Unmarshal([]byte(trimmed), &parsed); err != nil {
 		return trimmed
 	}
 	return parsed
+}
+
+func isFormURLEncoded(contentType string) bool {
+	mediaType := strings.SplitN(strings.TrimSpace(strings.ToLower(contentType)), ";", 2)[0]
+	return strings.TrimSpace(mediaType) == "application/x-www-form-urlencoded"
+}
+
+func decodeFormBody(body string) map[string]any {
+	values, err := url.ParseQuery(body)
+	if err != nil {
+		return map[string]any{}
+	}
+	result := make(map[string]any, len(values))
+	for key, vals := range values {
+		if len(vals) > 0 {
+			result[key] = vals[0]
+		} else {
+			result[key] = ""
+		}
+	}
+	return result
 }
 
 func encodeRuntimeResponseBody(value any) ([]byte, string, error) {
