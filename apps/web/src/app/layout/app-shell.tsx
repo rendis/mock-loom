@@ -3,6 +3,7 @@ import { Shield, X } from 'lucide-react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
 
+import { useAuth } from '../../features/auth/auth-context'
 import { useSessionStore } from '../state/use-session-store'
 import {
   APP_ROUTES,
@@ -77,6 +78,8 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
     return integrationRouteMatch?.[1] ? decodeURIComponent(integrationRouteMatch[1]) : ''
   }, [location.pathname])
 
+  const { logout } = useAuth()
+
   const {
     me,
     workspaces,
@@ -87,7 +90,6 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
     selectedIntegrationId,
     selectWorkspace,
     selectIntegration,
-    logout,
   } = useSessionStore(
     useShallow((state) => ({
       me: state.me,
@@ -99,7 +101,6 @@ export function AppShell({ children }: AppShellProps): JSX.Element {
       selectedIntegrationId: state.selectedIntegrationId,
       selectWorkspace: state.selectWorkspace,
       selectIntegration: state.selectIntegration,
-      logout: state.logout,
     }))
   )
 

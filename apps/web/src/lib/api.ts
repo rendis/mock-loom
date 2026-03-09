@@ -554,36 +554,6 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   return normalizeAuthConfig(payload)
 }
 
-export async function exchangeCode(
-  tokenEndpoint: string,
-  code: string,
-  redirectUri: string,
-  clientId: string,
-  codeVerifier: string
-): Promise<{ access_token: string; refresh_token?: string; expires_in?: number }> {
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri,
-    client_id: clientId,
-    code_verifier: codeVerifier,
-  })
-
-  const response = await fetch(tokenEndpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  })
-
-  const payload = await ensureOK(response, 'token exchange failed')
-  const tokenBody = requireObject(payload, 'token exchange')
-  return {
-    access_token: pickString(tokenBody, ['access_token']),
-    refresh_token: pickStringOptional(tokenBody, ['refresh_token']),
-    expires_in: pickNumber(tokenBody, ['expires_in'], 0) || undefined,
-  }
-}
-
 export async function getMe(token: string): Promise<Me> {
   const response = await fetch(`${API_BASE}/auth/me`, { headers: authHeader(token) })
   const payload = await ensureOK(response, 'auth me failed')

@@ -31,7 +31,7 @@ function createMemoryStorage(): Storage {
   }
 }
 
-describe('useSessionStore auth transitions', () => {
+describe('useSessionStore', () => {
   beforeAll(async () => {
     vi.stubGlobal('localStorage', createMemoryStorage())
     const module = await import('./use-session-store')
@@ -41,10 +41,7 @@ describe('useSessionStore auth transitions', () => {
   beforeEach(() => {
     localStorage.clear()
     useSessionStore.setState({
-      initialized: true,
-      config: null,
       token: null,
-      authState: 'idle',
       me: null,
       workspaces: [],
       workspaceState: 'empty',
@@ -63,41 +60,35 @@ describe('useSessionStore auth transitions', () => {
     vi.restoreAllMocks()
   })
 
-  it('logout clears authenticated session state', () => {
+  it('setAuthState persists token and sets me', () => {
+    const me = { id: 'u1', email: 'a@b.com', fullName: 'A B', status: 'ACTIVE' }
+    useSessionStore.getState().setAuthState('tok-1', me)
+    const state = useSessionStore.getState()
+
+    expect(state.token).toBe('tok-1')
+    expect(state.me).toEqual(me)
+    expect(localStorage.getItem('mock_loom_access_token')).toBe('tok-1')
+  })
+
+  it('clearAuthState removes token, me, and resets collections', () => {
     useSessionStore.setState({
-      token: 'token-1',
-      authState: 'authenticated',
+      token: 'tok-1',
+      me: { id: 'u1', email: 'a@b.com', fullName: 'A B', status: 'ACTIVE' },
       selectedWorkspaceId: 'ws-1',
       selectedIntegrationId: 'int-1',
       error: 'boom',
     })
+    localStorage.setItem('mock_loom_access_token', 'tok-1')
 
-    useSessionStore.getState().logout()
+    useSessionStore.getState().clearAuthState()
     const state = useSessionStore.getState()
 
     expect(state.token).toBeNull()
-    expect(state.authState).toBe('idle')
+    expect(state.me).toBeNull()
     expect(state.selectedWorkspaceId).toBe('')
     expect(state.selectedIntegrationId).toBe('')
     expect(state.error).toBe('')
-  })
-
-  it('startLogin reports configuration error when provider is missing', async () => {
-    await useSessionStore.getState().startLogin('http://localhost:5173/login')
-    expect(useSessionStore.getState().error).toBe('OIDC login is not configured')
-  })
-
-  it('startLogin in dummy auth mode stores token and triggers bootstrap', async () => {
-    const bootstrapSpy = vi.fn().mockResolvedValue(undefined)
-    useSessionStore.setState({
-      config: { dummyAuth: true },
-      bootstrap: bootstrapSpy,
-    })
-
-    await useSessionStore.getState().startLogin('http://localhost:5173/login')
-
-    expect(useSessionStore.getState().token).toBe('dummy-token')
-    expect(bootstrapSpy).toHaveBeenCalledWith('http://localhost:5173/login')
+    expect(localStorage.getItem('mock_loom_access_token')).toBeNull()
   })
 
   it('refreshWorkspaces keeps current selection when still available', async () => {

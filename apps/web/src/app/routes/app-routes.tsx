@@ -9,6 +9,7 @@ import { EndpointEditorScreen } from '../../features/endpoint-editor/screen'
 import { PacksScreen } from '../../features/packs/screen'
 import { OverviewRoutingScreen } from '../../features/overview-routing/screen'
 import { LoginScreen } from '../../features/auth/screen'
+import { CallbackHandler } from '../../features/auth/callback-handler'
 import { WorkspaceScreen } from '../../features/workspace/screen'
 import { WorkspaceAdminScreen } from '../../features/workspace-admin/screen'
 import { GlobalWorkspaceAdminScreen } from '../../features/global-admin/screen'
@@ -24,6 +25,7 @@ export function AppRoutes(): JSX.Element {
       <Routes>
         <Route path={APP_ROUTES.root} element={<Navigate replace to={resolveRootRedirect(token)} />} />
         <Route path={APP_ROUTES.login} element={<LoginScreen />} />
+        <Route path={APP_ROUTES.authCallback} element={<CallbackHandler />} />
         <Route path="*" element={<Navigate replace to={resolveFallbackRedirect(token)} />} />
       </Routes>
     )

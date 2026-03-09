@@ -3,6 +3,7 @@ export const ENDPOINT_ROUTE_SENTINEL = '__new__'
 export const APP_ROUTES = {
   root: '/',
   login: '/login',
+  authCallback: '/auth/callback',
   workspace: '/workspace',
   workspaceAdmin: '/workspace/admin',
   globalWorkspaceAdmin: '/admin/workspaces',

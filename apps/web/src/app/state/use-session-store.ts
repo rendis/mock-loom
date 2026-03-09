@@ -1,20 +1,15 @@
 import { create } from 'zustand'
 
-import { createPkcePair } from '../../lib/pkce'
 import { finalizeSlugInput } from '../../shared/lib/slug'
 import {
   createIntegration,
-  exchangeCode,
   formatAPIError,
-  getAuthConfig,
   getIntegrations,
-  getMe,
   getWorkspaceMembers,
   getWorkspaces,
   inviteMember,
 } from '../../lib/api'
 import type {
-  AuthConfig,
   Integration,
   Me,
   Workspace,
@@ -23,11 +18,7 @@ import type {
 } from '../../types/api'
 
 const STORAGE_TOKEN = 'mock_loom_access_token'
-const STORAGE_VERIFIER = 'mock_loom_pkce_verifier'
-const STORAGE_STATE = 'mock_loom_pkce_state'
-const DUMMY_AUTH_TOKEN = 'dummy-token'
 
-type AuthState = 'idle' | 'redirecting' | 'callback_processing' | 'authenticated' | 'error'
 type CollectionState = 'loading' | 'empty' | 'ready' | 'error'
 
 interface IntegrationDraft {
@@ -36,10 +27,7 @@ interface IntegrationDraft {
 }
 
 interface SessionStore {
-  initialized: boolean
-  config: AuthConfig | null
   token: string | null
-  authState: AuthState
   me: Me | null
   workspaces: Workspace[]
   workspaceState: CollectionState
@@ -52,9 +40,8 @@ interface SessionStore {
   creatingIntegration: boolean
   error: string
 
-  bootstrap: (redirectUri: string) => Promise<void>
-  startLogin: (redirectUri: string) => Promise<void>
-  logout: () => void
+  setAuthState: (token: string, me: Me) => void
+  clearAuthState: () => void
   refreshWorkspaces: () => Promise<void>
   selectWorkspace: (workspaceId: string) => Promise<void>
   selectIntegration: (integrationId: string) => void
@@ -64,145 +51,28 @@ interface SessionStore {
 }
 
 export const useSessionStore = create<SessionStore>((set, get) => ({
-  initialized: false,
-  config: null,
   token: localStorage.getItem(STORAGE_TOKEN),
-  authState: 'idle',
   me: null,
   workspaces: [],
-  workspaceState: 'loading',
+  workspaceState: 'empty',
   selectedWorkspaceId: '',
   members: [],
-  membersState: 'loading',
+  membersState: 'empty',
   integrations: [],
-  integrationsState: 'loading',
+  integrationsState: 'empty',
   selectedIntegrationId: '',
   creatingIntegration: false,
   error: '',
 
-  async bootstrap(redirectUri: string): Promise<void> {
-    set({ error: '', workspaceState: 'loading' })
-
-    try {
-      const config = await getAuthConfig()
-      set({ config })
-
-      const url = new URL(window.location.href)
-      const code = url.searchParams.get('code')
-      const state = url.searchParams.get('state')
-
-      if (code && state && config.panelProvider?.tokenEndpoint && config.panelProvider.clientId) {
-        set({ authState: 'callback_processing' })
-        const storedState = sessionStorage.getItem(STORAGE_STATE)
-        const verifier = sessionStorage.getItem(STORAGE_VERIFIER)
-
-        if (!storedState || storedState !== state || !verifier) {
-          throw new Error('OIDC state mismatch')
-        }
-
-        const tokenPayload = await exchangeCode(
-          config.panelProvider.tokenEndpoint,
-          code,
-          redirectUri,
-          config.panelProvider.clientId,
-          verifier
-        )
-
-        sessionStorage.removeItem(STORAGE_STATE)
-        sessionStorage.removeItem(STORAGE_VERIFIER)
-        localStorage.setItem(STORAGE_TOKEN, tokenPayload.access_token)
-        set({ token: tokenPayload.access_token })
-
-        url.searchParams.delete('code')
-        url.searchParams.delete('state')
-        window.history.replaceState({}, '', url.toString())
-      }
-
-      const currentToken = localStorage.getItem(STORAGE_TOKEN)
-      if (!currentToken) {
-        set({
-          initialized: true,
-          token: null,
-          authState: 'idle',
-          workspaceState: 'empty',
-          members: [],
-          membersState: 'empty',
-          integrations: [],
-          integrationsState: 'empty',
-          selectedWorkspaceId: '',
-          selectedIntegrationId: '',
-        })
-        return
-      }
-
-      const me = await getMe(currentToken)
-
-      set({
-        initialized: true,
-        token: currentToken,
-        me,
-        authState: 'authenticated',
-      })
-
-      await get().refreshWorkspaces()
-    } catch (error) {
-      localStorage.removeItem(STORAGE_TOKEN)
-      set({
-        initialized: true,
-        token: null,
-        authState: 'error',
-        workspaceState: 'error',
-        error: formatAPIError(error),
-      })
-    }
+  setAuthState(token: string, me: Me): void {
+    localStorage.setItem(STORAGE_TOKEN, token)
+    set({ token, me })
   },
 
-  async startLogin(redirectUri: string): Promise<void> {
-    const config = get().config
-    if (!config) {
-      set({ error: 'OIDC login is not configured' })
-      return
-    }
-
-    if (config.dummyAuth) {
-      localStorage.setItem(STORAGE_TOKEN, DUMMY_AUTH_TOKEN)
-      set({ token: DUMMY_AUTH_TOKEN })
-      await get().bootstrap(redirectUri)
-      return
-    }
-
-    const provider = config.panelProvider
-    if (!provider?.authorizationEndpoint || !provider.clientId) {
-      set({ error: 'OIDC authorization endpoint/client_id missing' })
-      return
-    }
-
-    try {
-      set({ authState: 'redirecting', error: '' })
-      const { challenge, verifier, state } = await createPkcePair()
-      sessionStorage.setItem(STORAGE_VERIFIER, verifier)
-      sessionStorage.setItem(STORAGE_STATE, state)
-
-      const authURL = new URL(provider.authorizationEndpoint)
-      authURL.searchParams.set('response_type', 'code')
-      authURL.searchParams.set('client_id', provider.clientId)
-      authURL.searchParams.set('redirect_uri', redirectUri)
-      authURL.searchParams.set('scope', provider.scopes || 'openid profile email')
-      authURL.searchParams.set('code_challenge', challenge)
-      authURL.searchParams.set('code_challenge_method', 'S256')
-      authURL.searchParams.set('state', state)
-
-      window.location.assign(authURL.toString())
-    } catch (error) {
-      set({ authState: 'error', error: formatAPIError(error) })
-    }
-  },
-
-  logout(): void {
+  clearAuthState(): void {
     localStorage.removeItem(STORAGE_TOKEN)
     set({
       token: null,
-      authState: 'idle',
       me: null,
       workspaces: [],
       workspaceState: 'empty',
