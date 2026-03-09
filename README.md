@@ -351,7 +351,7 @@ mock-loom/
 │           ├── shared/ui/             # 15 reusable components
 │           └── lib/                   # API client, PKCE
 ├── packages/contracts/openapi/        # OpenAPI v1 spec
-├── skills/mock-loom-mcp/             # MCP skill definition
+├── skills/mock-loom/                 # MCP skill definition
 ├── Makefile                           # Build orchestration
 └── .env                               # Environment config
 ```
@@ -376,6 +376,12 @@ Full contract: [`packages/contracts/openapi/mock-loom.v1.yaml`](packages/contrac
 ## MCP Integration
 
 mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes 12 tools for AI-assisted API mocking workflows.
+
+### Install Skill
+
+```bash
+npx skills add https://github.com/rendis/mock-loom --skill mock-loom
+```
 
 ### Setup
 
