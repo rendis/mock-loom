@@ -2,26 +2,29 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"time"
+
+	"github.com/rendis/mock-loom/apps/mcp/internal/auth"
 )
 
 // Client is a thin HTTP client for the mock-loom API.
 type Client struct {
-	baseURL    string
-	authToken  string
-	httpClient *http.Client
+	baseURL       string
+	tokenProvider auth.TokenProvider
+	httpClient    *http.Client
 }
 
 // New creates a Client pointing at the given API base URL.
-func New(baseURL, authToken string) *Client {
+func New(baseURL string, tp auth.TokenProvider) *Client {
 	return &Client{
-		baseURL:   baseURL,
-		authToken: authToken,
+		baseURL:       baseURL,
+		tokenProvider: tp,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -171,8 +174,12 @@ func (c *Client) do(method, path string, body io.Reader, contentType string) (*h
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
-	if c.authToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.authToken)
+	token, err := c.tokenProvider.Token(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("obtain auth token: %w", err)
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)

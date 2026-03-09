@@ -19,6 +19,7 @@ MCP integration for the mock-loom Rule-Based API Mocking Engine.
 1. **API must be running**: `make run-dummy` (dummy auth, port 18081)
 2. **MCP binary must be built**: `make build-mcp`
 3. **MCP config**: `.mcp.json` at project root configures Claude Code to spawn the MCP server
+4. **OIDC mode**: if the API uses OIDC, run `./apps/mcp/bin/mock-loom-mcp login` first to authenticate via browser. Tokens are stored in `~/.mock-loom/tokens.json` and auto-refresh.
 
 ## Quick Start Workflow
 

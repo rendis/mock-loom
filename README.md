@@ -383,7 +383,7 @@ mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/
 npx skills add https://github.com/rendis/mock-loom --skill mock-loom
 ```
 
-### Setup
+### Setup (Dummy Auth)
 
 ```bash
 # 1. Start the API
@@ -394,6 +394,26 @@ make build-mcp
 
 # 3. MCP config is already in .mcp.json — Claude Code auto-discovers it
 ```
+
+### Setup (OIDC)
+
+When running the API with a real OIDC provider, the MCP server authenticates as the current user via browser login:
+
+```bash
+# 1. Build the MCP binary
+make build-mcp
+
+# 2. Login — opens browser for OIDC authentication
+./apps/mcp/bin/mock-loom-mcp login
+
+# 3. Check status
+./apps/mcp/bin/mock-loom-mcp status
+
+# 4. Logout (clears stored tokens)
+./apps/mcp/bin/mock-loom-mcp logout
+```
+
+Tokens are stored in `~/.mock-loom/tokens.json` (0600 perms) and auto-refresh using the refresh token. Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env to use OIDC tokens instead of the static dummy token.
 
 ### Tool Reference
 
