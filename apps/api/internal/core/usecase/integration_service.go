@@ -102,7 +102,7 @@ func (s *IntegrationService) Create(ctx context.Context, workspaceID, name, slug
 	name = strings.TrimSpace(name)
 	slug = strings.ToLower(strings.TrimSpace(slug))
 	baseURL = strings.TrimSpace(baseURL)
-	if name == "" || slug == "" || baseURL == "" {
+	if name == "" || slug == "" {
 		return nil, ErrInvalidInput
 	}
 

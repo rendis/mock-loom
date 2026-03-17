@@ -238,7 +238,6 @@ export const useSessionStore = create<SessionStore>((set, get) => ({
       const created = await createIntegration(token, workspaceId, {
         name: draft.name.trim(),
         slug: cleanedSlug,
-        baseUrl: cleanedSlug,
       })
       await get().refreshWorkspaceScope()
       set({ selectedIntegrationId: created.id })

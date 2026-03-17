@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { APP_ROUTES, overviewRoute } from '../../app/routes/paths'
 import { useSessionStore } from '../../app/state/use-session-store'
+import { buildMockBaseUrl } from '../../lib/api'
 import { cn } from '../../shared/lib/cn'
 import { parseBundleAQAState } from '../../shared/lib/qa-state'
 import { finalizeSlugInput, formatSlugInput } from '../../shared/lib/slug'
@@ -50,23 +51,26 @@ function IconActionButton({ label, disabled, onClick, icon }: IconActionButtonPr
 const QA_PREVIEW_INTEGRATIONS = [
   {
     id: 'qa-github',
+    workspaceId: 'qa-workspace',
     name: 'Github',
     slug: '@mockengine-io',
-    baseUrl: 'https://api.github.com/v3',
+    baseUrl: '',
     status: 'ACTIVE',
   },
   {
     id: 'qa-postman',
+    workspaceId: 'qa-workspace',
     name: 'Postman',
     slug: 'team-alpha-sync',
-    baseUrl: 'https://api.getpostman.com',
+    baseUrl: '',
     status: 'ACTIVE',
   },
   {
     id: 'qa-slack',
+    workspaceId: 'qa-workspace',
     name: 'Slack',
     slug: '#dev-alerts',
-    baseUrl: 'https://hooks.slack.com',
+    baseUrl: '',
     status: 'SYNCING',
   },
 ]
@@ -127,7 +131,7 @@ export function WorkspaceScreen(): JSX.Element {
       return integrations
     }
     return integrations.filter((integration) =>
-      [integration.name, integration.slug, integration.baseUrl].some((value) => value.toLowerCase().includes(query))
+      [integration.name, integration.slug].some((value) => value.toLowerCase().includes(query))
     )
   }, [integrationSearch, integrations])
 
@@ -206,7 +210,7 @@ function hasWorkspaceCreatePermission(systemRole?: SystemRole): boolean {
 
 interface ReadyWorkspaceLayoutProps {
   token: string | null
-  integrations: Array<{ id: string; name: string; slug: string; baseUrl: string; status: string }>
+  integrations: Array<{ id: string; workspaceId: string; name: string; slug: string; baseUrl: string; status: string }>
   integrationSearch: string
   setIntegrationSearch: (value: string) => void
   showCreateIntegrationForm: boolean
@@ -303,7 +307,7 @@ function ReadyWorkspaceLayout({
                   </div>
                   <h3 className="text-3xl font-semibold text-text">{integration.name}</h3>
                   <p className="mt-2 text-sm font-mono text-muted">{integration.slug}</p>
-                  <p className="mt-5 truncate rounded-xl bg-surface-soft px-3 py-2 text-sm text-muted">{integration.baseUrl}</p>
+                  <p className="mt-5 truncate rounded-xl bg-surface-soft px-3 py-2 text-sm text-muted">{buildMockBaseUrl(integration.workspaceId, integration.id)}</p>
                 </button>
               ))}
             </div>

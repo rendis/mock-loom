@@ -45,6 +45,11 @@ import type {
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/api/v1'
 
+export function buildMockBaseUrl(workspaceId: string, integrationId: string): string {
+  const base = API_BASE.replace(/\/api\/v1$/, '')
+  return `${base}/mock/${workspaceId}/${integrationId}`
+}
+
 type JsonObject = Record<string, unknown>
 
 export class APIError extends Error {
@@ -668,7 +673,7 @@ export async function getIntegrations(token: string, workspaceId: string): Promi
 export async function createIntegration(
   token: string,
   workspaceId: string,
-  payload: { name: string; slug: string; baseUrl: string }
+  payload: { name: string; slug: string; baseUrl?: string }
 ): Promise<Integration> {
   const response = await fetch(`${API_BASE}/workspaces/${workspaceId}/integrations`, {
     method: 'POST',

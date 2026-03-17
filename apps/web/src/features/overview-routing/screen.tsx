@@ -3,6 +3,7 @@ import { Pencil, X } from 'lucide-react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import {
+  buildMockBaseUrl,
   formatAPIError,
   getIntegrationOverview,
   getIntegrationRoutes,
@@ -433,13 +434,19 @@ export function OverviewRoutingScreen(): JSX.Element {
               {viewState === 'ready' ? (
                 <>
                   <div className="rounded-2xl border border-border bg-surface-raised p-5 shadow-card">
-                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Base URL</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">Mock Base URL</p>
                     <div className="mt-3 flex items-center gap-2 rounded-xl border border-border bg-surface-soft p-3 shadow-inset">
-                      <p className="truncate text-sm font-mono text-text">{displayOverview?.integration.baseUrl || '-'}</p>
+                      <p className="truncate text-sm font-mono text-text">
+                        {displayOverview ? buildMockBaseUrl(displayOverview.integration.workspaceId, integrationId) : '-'}
+                      </p>
                       <button
-                        aria-label="Copy base URL"
+                        aria-label="Copy mock base URL"
                         className="rounded-md border border-border bg-surface-raised px-2 py-1 text-xs font-semibold text-muted hover:text-text"
-                        onClick={() => void copyBaseURL(displayOverview?.integration.baseUrl || '')}
+                        onClick={() =>
+                          void copyBaseURL(
+                            displayOverview ? buildMockBaseUrl(displayOverview.integration.workspaceId, integrationId) : ''
+                          )
+                        }
                         type="button"
                       >
                         Copy
