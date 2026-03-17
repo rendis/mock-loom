@@ -47,7 +47,8 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) || '/
 
 export function buildMockBaseUrl(workspaceId: string, integrationId: string): string {
   const base = API_BASE.replace(/\/api\/v1$/, '')
-  return `${base}/mock/${workspaceId}/${integrationId}`
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origin}${base}/mock/${workspaceId}/${integrationId}`
 }
 
 type JsonObject = Record<string, unknown>
