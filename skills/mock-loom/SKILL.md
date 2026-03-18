@@ -17,7 +17,30 @@ MCP integration for the mock-loom Rule-Based API Mocking Engine.
 
 ## Setup
 
-### Dummy Auth (development)
+### Install from repo (no clone needed)
+
+```bash
+go install github.com/rendis/mock-loom/apps/mcp/cmd/mock-loom-mcp@latest
+```
+
+Then add to your MCP config (`~/.claude/mcp.json` or project `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "mock-loom": {
+      "command": "mock-loom-mcp",
+      "args": [],
+      "env": {
+        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
+        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
+      }
+    }
+  }
+}
+```
+
+### Build locally (from cloned repo)
 
 ```bash
 make run-dummy    # Start API on port 18081 (no credentials needed)
@@ -29,10 +52,9 @@ make build-mcp    # Build MCP binary
 ### OIDC (production)
 
 ```bash
-make build-mcp                          # Build MCP binary
-./apps/mcp/bin/mock-loom-mcp login      # Open browser → OIDC login
-./apps/mcp/bin/mock-loom-mcp status     # Verify token is valid
-./apps/mcp/bin/mock-loom-mcp logout     # Clear stored tokens
+mock-loom-mcp login      # Open browser → OIDC login
+mock-loom-mcp status     # Verify token is valid
+mock-loom-mcp logout     # Clear stored tokens
 ```
 
 Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC tokens from `~/.mock-loom/tokens.json` instead. Tokens auto-refresh via refresh token.

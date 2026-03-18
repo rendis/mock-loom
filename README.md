@@ -125,13 +125,13 @@ graph TB
     Runtime --> Usecases
 ```
 
-| Layer | Responsibility |
-|-------|---------------|
-| **Handlers** | HTTP routing, request/response serialization (Fiber) |
-| **Middleware** | OIDC token validation, workspace/integration access control |
-| **Use Cases** | Business logic: workspace mgmt, scenario matching, mutations, traffic logging |
-| **Ports** | Interfaces — application layer never depends on concrete adapters |
-| **Adapters** | SQLite persistence, cloud storage (S3/GCS) |
+| Layer               | Responsibility                                                                    |
+| ------------------- | --------------------------------------------------------------------------------- |
+| **Handlers**        | HTTP routing, request/response serialization (Fiber)                              |
+| **Middleware**      | OIDC token validation, workspace/integration access control                       |
+| **Use Cases**       | Business logic: workspace mgmt, scenario matching, mutations, traffic logging     |
+| **Ports**           | Interfaces — application layer never depends on concrete adapters                 |
+| **Adapters**        | SQLite persistence, cloud storage (S3/GCS)                                        |
 | **Runtime Gateway** | Unprotected endpoint (`/mock/:ws/:integration/*`) that executes the mock pipeline |
 
 ## How It Works
@@ -193,15 +193,15 @@ sequenceDiagram
 
 Scenarios use [expr-lang](https://github.com/expr-lang/expr) for conditions. Available context:
 
-| Variable | Description |
-|----------|-------------|
-| `request.method` | HTTP method (GET, POST, ...) |
-| `request.path` | Request path |
-| `request.pathParams.<name>` | Path parameters (e.g., `:userId`) |
-| `request.query.<name>` | Query string values |
-| `request.headers.<name>` | Request headers (lowercase keys) |
-| `request.body` | Parsed JSON body |
-| `ds.<slug>` | Data source entities by slug |
+| Variable                    | Description                      |
+| --------------------------- | -------------------------------- |
+| `request.method`            | HTTP method (GET, POST, ...)     |
+| `request.path`              | Request path                     |
+| `request.pathParams.<name>` | Path parameters (e.g.,`:userId`) |
+| `request.query.<name>`      | Query string values              |
+| `request.headers.<name>`    | Request headers (lowercase keys) |
+| `request.body`              | Parsed JSON body                 |
+| `ds.<slug>`                 | Data source entities by slug     |
 
 **Example conditions:**
 
@@ -214,20 +214,20 @@ len(ds.orders) > 0 && request.query.status == 'pending'
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| **API** | Go 1.24 · Fiber · SQLite (pure Go driver) |
-| **Auth** | OIDC autodiscovery · JWT · PKCE |
-| **Expression Engine** | expr-lang/expr |
-| **Schema Validation** | kin-openapi · jsonschema/v6 |
-| **Frontend** | React 18 · TypeScript (strict) · Vite |
-| **Styling** | Tailwind CSS · Radix UI · Lucide icons |
-| **Editor** | Monaco Editor |
-| **State** | Zustand |
-| **Testing** | Vitest · Playwright (E2E) |
-| **MCP** | Go MCP SDK · stdio transport |
-| **Cloud Backup** | AWS S3 · Google Cloud Storage |
-| **Import** | postman-to-openapi · curlconverter |
+| Component             | Technology                                |
+| --------------------- | ----------------------------------------- |
+| **API**               | Go 1.24 · Fiber · SQLite (pure Go driver) |
+| **Auth**              | OIDC autodiscovery · JWT · PKCE           |
+| **Expression Engine** | expr-lang/expr                            |
+| **Schema Validation** | kin-openapi · jsonschema/v6               |
+| **Frontend**          | React 18 · TypeScript (strict) · Vite     |
+| **Styling**           | Tailwind CSS · Radix UI · Lucide icons    |
+| **Editor**            | Monaco Editor                             |
+| **State**             | Zustand                                   |
+| **Testing**           | Vitest · Playwright (E2E)                 |
+| **MCP**               | Go MCP SDK · stdio transport              |
+| **Cloud Backup**      | AWS S3 · Google Cloud Storage             |
+| **Import**            | postman-to-openapi · curlconverter        |
 
 ## Getting Started
 
@@ -250,6 +250,7 @@ make run-dummy
 ```
 
 This starts:
+
 - **API** at `http://127.0.0.1:18081` (dummy auth, no OIDC required)
 - **Web** at `http://127.0.0.1:4173`
 
@@ -269,30 +270,30 @@ make run
 
 ### Key Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MOCK_LOOM_SERVER_PORT` | API server port | `8080` |
-| `MOCK_LOOM_DB_DSN` | SQLite DSN | `file:mock-loom.db?_pragma=foreign_keys(1)` |
-| `MOCK_LOOM_AUTH_DISCOVERY_URL` | OIDC discovery endpoint | — |
-| `MOCK_LOOM_DUMMY_AUTH_ENABLED` | Enable dummy auth (dev only) | `false` |
-| `MOCK_LOOM_BOOTSTRAP_ENABLED` | Auto-bootstrap first user | `true` |
-| `MOCK_LOOM_BOOTSTRAP_ALLOWED_EMAILS` | Emails allowed for bootstrap | — |
-| `VITE_API_BASE_URL` | Frontend → API base URL | `http://127.0.0.1:8080/api/v1` |
+| Variable                             | Description                  | Default                                     |
+| ------------------------------------ | ---------------------------- | ------------------------------------------- |
+| `MOCK_LOOM_SERVER_PORT`              | API server port              | `8080`                                      |
+| `MOCK_LOOM_DB_DSN`                   | SQLite DSN                   | `file:mock-loom.db?_pragma=foreign_keys(1)` |
+| `MOCK_LOOM_AUTH_DISCOVERY_URL`       | OIDC discovery endpoint      | —                                           |
+| `MOCK_LOOM_DUMMY_AUTH_ENABLED`       | Enable dummy auth (dev only) | `false`                                     |
+| `MOCK_LOOM_BOOTSTRAP_ENABLED`        | Auto-bootstrap first user    | `true`                                      |
+| `MOCK_LOOM_BOOTSTRAP_ALLOWED_EMAILS` | Emails allowed for bootstrap | —                                           |
+| `VITE_API_BASE_URL`                  | Frontend → API base URL      | `http://127.0.0.1:8080/api/v1`              |
 
 ## Development
 
 ### Make Targets
 
-| Command | Description |
-|---------|-------------|
-| `make install` | Install JS dependencies |
-| `make build` | Build API binary + web assets |
-| `make dev` | Watch mode with live reload (requires [air](https://github.com/air-verse/air)) |
-| `make dev-dummy` | Watch mode with dummy auth |
-| `make run-dummy` | Build + run with dummy auth (port 18081) |
-| `make build-mcp` | Build MCP server binary |
-| `make smoke-dummy` | Quick API health check |
-| `make clean` | Remove build artifacts |
+| Command            | Description                                                                   |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `make install`     | Install JS dependencies                                                       |
+| `make build`       | Build API binary + web assets                                                 |
+| `make dev`         | Watch mode with live reload (requires[air](https://github.com/air-verse/air)) |
+| `make dev-dummy`   | Watch mode with dummy auth                                                    |
+| `make run-dummy`   | Build + run with dummy auth (port 18081)                                      |
+| `make build-mcp`   | Build MCP server binary                                                       |
+| `make smoke-dummy` | Quick API health check                                                        |
+| `make clean`       | Remove build artifacts                                                        |
 
 ### Testing
 
@@ -333,10 +334,10 @@ mock-loom/
 │   │   │       └── validation/       # Payload validation
 │   │   └── Dockerfile
 │   ├── mcp/                          # MCP server for Claude Code
-│   │   ├── cmd/server/               # Entrypoint
+│   │   ├── cmd/mock-loom-mcp/       # Entrypoint
 │   │   └── internal/
 │   │       ├── client/               # HTTP client → API
-│   │       └── tools/                # 12 MCP tool definitions
+│   │       └── tools/                # 18 MCP tool definitions
 │   └── web/                          # React SPA
 │       └── src/
 │           ├── app/                   # Shell, routing, session store
@@ -360,22 +361,22 @@ mock-loom/
 
 All endpoints are prefixed with `/api/v1` except the runtime gateway.
 
-| Group | Endpoints | Description |
-|-------|-----------|-------------|
-| **Auth** | `/auth/config`, `/auth/me`, `/auth/logout` | OIDC config, identity, logout |
-| **Workspaces** | `/workspaces`, `/workspaces/:id` | CRUD + archive |
-| **Members** | `/workspaces/:id/members/*` | Invite, role management |
-| **Integrations** | `/workspaces/:id/integrations`, `/integrations/:id/*` | Integration + pack + endpoint CRUD |
-| **Data Sources** | `/integrations/:id/data-sources/*` | Baseline upload, sync, schema |
-| **Data Debugger** | `/integrations/:id/data-sources/:sourceId/entities/*` | Entity CRUD, timeline, rollback |
-| **Backup** | `/admin/backup/*` | Config, trigger, restore |
-| **Runtime Gateway** | `/mock/:workspaceId/:integrationId/*` | Execute mock requests (unprotected) |
+| Group               | Endpoints                                             | Description                         |
+| ------------------- | ----------------------------------------------------- | ----------------------------------- |
+| **Auth**            | `/auth/config`, `/auth/me`, `/auth/logout`            | OIDC config, identity, logout       |
+| **Workspaces**      | `/workspaces`, `/workspaces/:id`                      | CRUD + archive                      |
+| **Members**         | `/workspaces/:id/members/*`                           | Invite, role management             |
+| **Integrations**    | `/workspaces/:id/integrations`, `/integrations/:id/*` | Integration + pack + endpoint CRUD  |
+| **Data Sources**    | `/integrations/:id/data-sources/*`                    | Baseline upload, sync, schema       |
+| **Data Debugger**   | `/integrations/:id/data-sources/:sourceId/entities/*` | Entity CRUD, timeline, rollback     |
+| **Backup**          | `/admin/backup/*`                                     | Config, trigger, restore            |
+| **Runtime Gateway** | `/mock/:workspaceId/:integrationId/*`                 | Execute mock requests (unprotected) |
 
 Full contract: [`packages/contracts/openapi/mock-loom.v1.yaml`](packages/contracts/openapi/mock-loom.v1.yaml)
 
 ## MCP Integration
 
-mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes 12 tools for AI-assisted API mocking workflows.
+mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes 18 tools for AI-assisted API mocking workflows.
 
 ### Install Skill
 
@@ -383,7 +384,34 @@ mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/
 npx skills add https://github.com/rendis/mock-loom --skill mock-loom
 ```
 
-### Setup (Dummy Auth)
+### Option A: Install from repo (go install)
+
+Install the MCP binary directly from the repository — no need to clone:
+
+```bash
+go install github.com/rendis/mock-loom/apps/mcp/cmd/mock-loom-mcp@latest
+```
+
+Then add to your Claude Code MCP config (`~/.claude/mcp.json` or project `.mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "mock-loom": {
+      "command": "mock-loom-mcp",
+      "args": [],
+      "env": {
+        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
+        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
+      }
+    }
+  }
+}
+```
+
+> Requires `$GOPATH/bin` in your `$PATH`. Verify with `which mock-loom-mcp`.
+
+### Option B: Build locally (from cloned repo)
 
 ```bash
 # 1. Start the API
@@ -395,47 +423,50 @@ make build-mcp
 # 3. MCP config is already in .mcp.json — Claude Code auto-discovers it
 ```
 
-### Setup (OIDC)
+### OIDC Authentication
 
 When running the API with a real OIDC provider, the MCP server authenticates as the current user via browser login:
 
 ```bash
-# 1. Build the MCP binary
-make build-mcp
+# Login — opens browser for OIDC authentication
+mock-loom-mcp login
 
-# 2. Login — opens browser for OIDC authentication
-./apps/mcp/bin/mock-loom-mcp login
+# Check status
+mock-loom-mcp status
 
-# 3. Check status
-./apps/mcp/bin/mock-loom-mcp status
-
-# 4. Logout (clears stored tokens)
-./apps/mcp/bin/mock-loom-mcp logout
+# Logout (clears stored tokens)
+mock-loom-mcp logout
 ```
 
 Tokens are stored in `~/.mock-loom/tokens.json` (0600 perms) and auto-refresh using the refresh token. Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env to use OIDC tokens instead of the static dummy token.
 
 ### Tool Reference
 
-| Tool | Purpose |
-|------|---------|
-| `mock_loom_list_workspaces` | List all workspaces |
-| `mock_loom_setup_workspace` | Create or get workspace (idempotent) |
-| `mock_loom_setup_integration` | Create or get integration |
-| `mock_loom_manage_pack` | Create/update endpoint pack |
-| `mock_loom_import_routes` | Import from OpenAPI / Postman / cURL |
-| `mock_loom_list_routes` | List packs or endpoints |
-| `mock_loom_get_overview` | Full integration overview |
-| `mock_loom_configure_endpoint` | Update contract + scenarios |
-| `mock_loom_get_traffic` | View traffic logs |
-| `mock_loom_manage_data_source` | Data source CRUD + baseline |
-| `mock_loom_debug_entities` | Entity timeline + rollback |
-| `mock_loom_send_mock_request` | Execute mock request |
+| Tool                                  | Purpose                              |
+| ------------------------------------- | ------------------------------------ |
+| `mock_loom_list_workspaces`           | List all workspaces                  |
+| `mock_loom_setup_workspace`           | Create or get workspace (idempotent) |
+| `mock_loom_list_integrations`         | List integrations in a workspace     |
+| `mock_loom_setup_integration`         | Create or get integration            |
+| `mock_loom_update_integration_auth`   | Update integration auth mode         |
+| `mock_loom_manage_auth_mock`          | Get/update auth mock policy          |
+| `mock_loom_manage_pack`              | Create/update endpoint pack          |
+| `mock_loom_import_routes`            | Import from OpenAPI / Postman / cURL |
+| `mock_loom_list_routes`              | List packs or endpoints              |
+| `mock_loom_get_overview`             | Full integration overview            |
+| `mock_loom_configure_endpoint`       | Update contract + scenarios          |
+| `mock_loom_update_endpoint_route`    | Update endpoint method/path          |
+| `mock_loom_manage_endpoint_revisions`| List/restore endpoint revisions      |
+| `mock_loom_get_traffic`             | View traffic logs                    |
+| `mock_loom_get_audit_events`        | List audit events                    |
+| `mock_loom_manage_data_source`      | Data source CRUD + baseline          |
+| `mock_loom_debug_entities`          | Entity timeline + rollback           |
+| `mock_loom_send_mock_request`       | Execute mock request                 |
 
 ### Example Workflow
 
 ```
-list_workspaces → setup_workspace → setup_integration
+list_workspaces → setup_workspace → list_integrations → setup_integration
 → manage_pack → import_routes → configure_endpoint
 → manage_data_source → send_mock_request → get_traffic
 ```
@@ -473,14 +504,14 @@ MOCK_LOOM_BACKUP_BUCKET=my-backup-bucket
 
 ## Troubleshooting
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| `p2o not found` | Missing Postman CLI | `npm install -g postman-to-openapi@3.0.1` |
-| `curlconverter not found` | Missing cURL converter | `npm install -g curlconverter@4.12.0` |
-| Port 8080 in use | Another service on same port | Set `MOCK_LOOM_SERVER_PORT` to a free port |
-| OIDC discovery fails | Invalid discovery URL | Verify `MOCK_LOOM_AUTH_DISCOVERY_URL` is reachable |
-| Empty workspace after login | Bootstrap not triggered | Ensure `MOCK_LOOM_BOOTSTRAP_ENABLED=true` and your email is in the allowlist |
-| `air not found` | Missing live reload tool | `go install github.com/air-verse/air@latest` |
+| Issue                       | Cause                        | Fix                                                                          |
+| --------------------------- | ---------------------------- | ---------------------------------------------------------------------------- |
+| `p2o not found`             | Missing Postman CLI          | `npm install -g postman-to-openapi@3.0.1`                                    |
+| `curlconverter not found`   | Missing cURL converter       | `npm install -g curlconverter@4.12.0`                                        |
+| Port 8080 in use            | Another service on same port | Set `MOCK_LOOM_SERVER_PORT` to a free port                                   |
+| OIDC discovery fails        | Invalid discovery URL        | Verify `MOCK_LOOM_AUTH_DISCOVERY_URL` is reachable                           |
+| Empty workspace after login | Bootstrap not triggered      | Ensure `MOCK_LOOM_BOOTSTRAP_ENABLED=true` and your email is in the allowlist |
+| `air not found`             | Missing live reload tool     | `go install github.com/air-verse/air@latest`                                 |
 
 ## Contributing
 

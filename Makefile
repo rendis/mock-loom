@@ -72,7 +72,7 @@ build-api:
 
 build-mcp:
 	@mkdir -p "$(MCP_DIR)/bin"
-	@cd "$(MCP_DIR)" && go build -o "bin/mock-loom-mcp" ./cmd/server
+	@cd "$(MCP_DIR)" && go build -o "bin/mock-loom-mcp" ./cmd/mock-loom-mcp
 
 build-web:
 	@pnpm --filter @mock-loom/web build
