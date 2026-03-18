@@ -42,14 +42,15 @@ Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC 
 ```
 1. mock_loom_list_workspaces          → discover existing workspaces
 2. mock_loom_setup_workspace          → create workspace (idempotent by slug)
-3. mock_loom_setup_integration        → create integration in workspace
-4. mock_loom_manage_pack              → create endpoint pack (route group)
-5. mock_loom_import_routes            → import from OpenAPI/Postman/cURL
+3. mock_loom_list_integrations        → discover integrations in a workspace
+4. mock_loom_setup_integration        → create integration in workspace
+5. mock_loom_manage_pack              → create endpoint pack (route group)
+6. mock_loom_import_routes            → import from OpenAPI/Postman/cURL
    OR mock_loom_configure_endpoint    → manually configure contract + scenarios
-6. mock_loom_manage_data_source       → create data source + upload baseline JSON
-7. mock_loom_send_mock_request        → test the mock endpoint
-8. mock_loom_get_traffic              → verify scenario matching
-9. mock_loom_debug_entities           → inspect entity mutations
+7. mock_loom_manage_data_source       → create data source + upload baseline JSON
+8. mock_loom_send_mock_request        → test the mock endpoint
+9. mock_loom_get_traffic              → verify scenario matching
+10. mock_loom_debug_entities          → inspect entity mutations
 ```
 
 ## Tool Reference
@@ -65,7 +66,10 @@ Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC 
 
 | Tool | Purpose | Key Args |
 |------|---------|----------|
+| `mock_loom_list_integrations` | List integrations in workspace | `workspace_id` |
 | `mock_loom_setup_integration` | Create/get integration | `workspace_id`, `name`, `slug`, `base_url?`, `auth_mode?` |
+| `mock_loom_update_integration_auth` | Update integration auth mode | `integration_id`, `auth_mode` (NONE/BEARER/API_KEY) |
+| `mock_loom_manage_auth_mock` | Get/update auth mock policy | `integration_id`, `action` (get/update), `mode?`, `prebuilt?`, `custom_expr?` |
 | `mock_loom_manage_pack` | Create/update pack | `integration_id`, `name`, `slug`, `base_path`, `pack_id?` |
 | `mock_loom_import_routes` | Bulk import routes | `integration_id`, `pack_id`, `source_type` (OPENAPI/POSTMAN/CURL), `payload` |
 | `mock_loom_list_routes` | List packs/routes | `integration_id`, `pack_id?` |
@@ -76,7 +80,15 @@ Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC 
 | Tool | Purpose | Key Args |
 |------|---------|----------|
 | `mock_loom_configure_endpoint` | Get/update contract + scenarios | `integration_id`, `pack_id`, `endpoint_id`, `contract?`, `scenarios?` |
+| `mock_loom_update_endpoint_route` | Update endpoint method/path | `integration_id`, `pack_id`, `endpoint_id`, `method?`, `path?` |
+| `mock_loom_manage_endpoint_revisions` | List/restore revisions | `integration_id`, `pack_id`, `endpoint_id`, `action` (list/restore), `revision_id?` |
 | `mock_loom_get_traffic` | View traffic logs | `integration_id`, `pack_id`, `endpoint_id` |
+
+### Audit
+
+| Tool | Purpose | Key Args |
+|------|---------|----------|
+| `mock_loom_get_audit_events` | List audit events | `integration_id`, `resource_type?`, `actor?`, `limit?`, `cursor?` |
 
 ### Data Sources & Debugging
 

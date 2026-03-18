@@ -8,6 +8,97 @@ import (
 	"github.com/rendis/mock-loom/apps/mcp/internal/client"
 )
 
+// --- list_integrations ---
+
+type ListIntegrationsInput struct {
+	WorkspaceID string `json:"workspace_id" jsonschema:"required,workspace ID"`
+}
+
+type ListIntegrationsOutput struct {
+	Result any `json:"result" jsonschema:"list of integrations in the workspace"`
+}
+
+func listIntegrations(c *client.Client) func(context.Context, *mcp.CallToolRequest, ListIntegrationsInput) (*mcp.CallToolResult, ListIntegrationsOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ListIntegrationsInput) (*mcp.CallToolResult, ListIntegrationsOutput, error) {
+		result, err := c.Get(fmt.Sprintf("/workspaces/%s/integrations", input.WorkspaceID))
+		if err != nil {
+			return nil, ListIntegrationsOutput{}, fmt.Errorf("list integrations: %w", err)
+		}
+		return nil, ListIntegrationsOutput{Result: result}, nil
+	}
+}
+
+// --- update_integration_auth ---
+
+type UpdateIntegrationAuthInput struct {
+	IntegrationID string `json:"integration_id" jsonschema:"required,integration ID"`
+	AuthMode      string `json:"auth_mode" jsonschema:"required,NONE or BEARER or API_KEY"`
+}
+
+type UpdateIntegrationAuthOutput struct {
+	Result any `json:"result" jsonschema:"update result"`
+}
+
+func updateIntegrationAuth(c *client.Client) func(context.Context, *mcp.CallToolRequest, UpdateIntegrationAuthInput) (*mcp.CallToolResult, UpdateIntegrationAuthOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input UpdateIntegrationAuthInput) (*mcp.CallToolResult, UpdateIntegrationAuthOutput, error) {
+		result, err := c.Patch(fmt.Sprintf("/integrations/%s/auth", input.IntegrationID), map[string]string{
+			"authMode": input.AuthMode,
+		})
+		if err != nil {
+			return nil, UpdateIntegrationAuthOutput{}, fmt.Errorf("update integration auth: %w", err)
+		}
+		return nil, UpdateIntegrationAuthOutput{Result: result}, nil
+	}
+}
+
+// --- manage_auth_mock ---
+
+type ManageAuthMockInput struct {
+	IntegrationID string `json:"integration_id" jsonschema:"required,integration ID"`
+	Action        string `json:"action" jsonschema:"required,get or update"`
+	Mode          string `json:"mode,omitempty" jsonschema:"for update: prebuilt or custom"`
+	Prebuilt      string `json:"prebuilt,omitempty" jsonschema:"JSON object string for prebuilt config"`
+	CustomExpr    string `json:"custom_expr,omitempty" jsonschema:"expr-lang expression for custom mode"`
+}
+
+type ManageAuthMockOutput struct {
+	Result any `json:"result" jsonschema:"auth mock policy"`
+}
+
+func manageAuthMock(c *client.Client) func(context.Context, *mcp.CallToolRequest, ManageAuthMockInput) (*mcp.CallToolResult, ManageAuthMockOutput, error) {
+	return func(ctx context.Context, req *mcp.CallToolRequest, input ManageAuthMockInput) (*mcp.CallToolResult, ManageAuthMockOutput, error) {
+		path := fmt.Sprintf("/integrations/%s/auth-mock", input.IntegrationID)
+
+		switch input.Action {
+		case "get":
+			result, err := c.Get(path)
+			if err != nil {
+				return nil, ManageAuthMockOutput{}, fmt.Errorf("get auth mock: %w", err)
+			}
+			return nil, ManageAuthMockOutput{Result: result}, nil
+
+		case "update":
+			body := map[string]any{
+				"mode":       input.Mode,
+				"customExpr": input.CustomExpr,
+			}
+			if input.Prebuilt != "" {
+				body["prebuilt"] = rawJSON(input.Prebuilt)
+			} else {
+				body["prebuilt"] = map[string]any{}
+			}
+			result, err := c.Put(path, body)
+			if err != nil {
+				return nil, ManageAuthMockOutput{}, fmt.Errorf("update auth mock: %w", err)
+			}
+			return nil, ManageAuthMockOutput{Result: result}, nil
+
+		default:
+			return nil, ManageAuthMockOutput{}, fmt.Errorf("unknown action %q; valid actions: get, update", input.Action)
+		}
+	}
+}
+
 // --- setup_integration ---
 
 type SetupIntegrationInput struct {
@@ -207,6 +298,23 @@ func getOverview(c *client.Client) func(context.Context, *mcp.CallToolRequest, G
 }
 
 func RegisterIntegrationTools(server *mcp.Server, c *client.Client) {
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "mock_loom_list_integrations",
+		Description: "List all integrations (mock projects) in a workspace. Use after list_workspaces to discover integration IDs.",
+	}, listIntegrations(c))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "mock_loom_update_integration_auth",
+		Description: "Update the auth mode of an integration. Valid modes: NONE, BEARER, API_KEY.",
+	}, updateIntegrationAuth(c))
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name: "mock_loom_manage_auth_mock",
+		Description: `Get or update the auth mock policy for an integration.
+Actions: get (read current policy), update (set mode, prebuilt config, or custom expr-lang expression).
+Modes: prebuilt (predefined auth simulation), custom (expr-lang expression for auth evaluation).`,
+	}, manageAuthMock(c))
+
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "mock_loom_setup_integration",
 		Description: "Create a new integration (mock project) inside a workspace, or return existing one by slug. Idempotent. Optionally sets auth mode (NONE, BEARER, API_KEY).",
