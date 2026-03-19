@@ -229,9 +229,19 @@ func (s *BackupService) StartPeriodicSave(ctx context.Context, interval time.Dur
 		for {
 			select {
 			case <-ticker.C:
-				result, err := s.Save(ctx)
+				var result *BackupResult
+				var err error
+				for attempt := 0; attempt < 3; attempt++ {
+					result, err = s.Save(ctx)
+					if err == nil {
+						break
+					}
+					if attempt < 2 {
+						time.Sleep(2 * time.Second)
+					}
+				}
 				if err != nil {
-					log.Printf("backup: periodic save failed: %v", err)
+					log.Printf("backup: periodic save failed after retries: %v", err)
 				} else {
 					log.Printf("backup: periodic save complete (%d bytes, %dms)", result.Bytes, result.ElapsedMs)
 				}

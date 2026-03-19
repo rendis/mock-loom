@@ -11,7 +11,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-// Open opens sqlite database.
+// Open opens sqlite database with WAL mode and busy timeout for concurrent access.
 func Open(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
@@ -20,6 +20,20 @@ func Open(dsn string) (*sql.DB, error) {
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
+
+	pragmas := []string{
+		"PRAGMA journal_mode=WAL",
+		"PRAGMA busy_timeout=5000",
+		"PRAGMA wal_autocheckpoint=1000",
+	}
+	for _, p := range pragmas {
+		if _, err := db.Exec(p); err != nil {
+			return nil, fmt.Errorf("set pragma %s: %w", p, err)
+		}
+	}
+
+	db.SetMaxOpenConns(1)
+
 	return db, nil
 }
 
