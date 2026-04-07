@@ -84,6 +84,17 @@ Do not start implementation without completing this reading order.
 - `docs/ux.md`
 - `docs/specs/README.md`
 
+## MCP (OpenAPI Proxy)
+
+Uses `mcp-openapi-proxy` — it exposes three MCP tools: `ml_list_endpoints`, `ml_describe_endpoint`, and `ml_call_endpoint`.
+
+Each API operation still has a stable endpoint `toolName` (pattern: `ml_{method}_{path}`), but that identifier is passed into `ml_describe_endpoint` / `ml_call_endpoint`; it is not a standalone MCP tool.
+
+**Config**: `.mcp.json` at repo root
+**Spec**: `packages/contracts/openapi/mock-loom.v1.yaml`
+**Install**: `go install github.com/rendis/mcp-openapi-proxy/cmd/mcp-openapi-proxy@latest`
+**OIDC**: `mcp-openapi-proxy login` with `MCP_OIDC_ISSUER` + `MCP_OIDC_CLIENT_ID`
+
 ## 10) Mandatory tool usage
 
 - For visual validation/checks, always use `agent-browser`.

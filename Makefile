@@ -4,9 +4,7 @@ SHELL := /bin/bash
 ENV_FILE ?= .env
 API_DIR := apps/api
 WEB_DIR := apps/web
-MCP_DIR := apps/mcp
 API_BUILD_BIN := $(API_DIR)/bin/mock-loom-api
-MCP_BUILD_BIN := $(MCP_DIR)/bin/mock-loom-mcp
 WEB_DEV_HOST ?= 127.0.0.1
 WEB_DEV_PORT ?= 5173
 WEB_RUN_HOST ?= 127.0.0.1
@@ -23,7 +21,7 @@ endif
 include $(ENV_FILE)
 .EXPORT_ALL_VARIABLES:
 
-.PHONY: help install check-tools check-runtime-tools check-dev-tools clean build build-api build-web build-mcp api web run dev run-dummy dev-dummy smoke smoke-dummy login-dummy
+.PHONY: help install check-tools check-runtime-tools check-dev-tools clean build build-api build-web api web run dev run-dummy dev-dummy smoke smoke-dummy login-dummy
 
 help:
 	@echo "Targets:"
@@ -37,7 +35,6 @@ help:
 	@echo "  make dev          Build first, then run with auto-rebuild on changes"
 	@echo "  make run-dummy    Build and run API+web in dummy auth mode (no credentials)"
 	@echo "  make dev-dummy    Run API+web in watch mode with dummy auth (no credentials)"
-	@echo "  make build-mcp    Build MCP server binary"
 	@echo "  make clean        Remove build artifacts"
 	@echo "  make smoke        Quick API smoke checks"
 	@echo "  make smoke-dummy  Quick API smoke checks against dummy-auth port/profile"
@@ -62,17 +59,13 @@ check-dev-tools:
 	@command -v air >/dev/null || (echo "air not found"; echo "Install air: go install github.com/air-verse/air@latest"; echo "If needed add to PATH: export PATH=\"$$HOME/go/bin:$$PATH\""; exit 1)
 
 clean:
-	@rm -rf "$(API_DIR)/bin" "$(WEB_DIR)/dist" "$(MCP_DIR)/bin"
+	@rm -rf "$(API_DIR)/bin" "$(WEB_DIR)/dist"
 
 build: check-tools build-api build-web
 
 build-api:
 	@mkdir -p "$(API_DIR)/bin"
 	@cd "$(API_DIR)" && go build -o "bin/mock-loom-api" ./cmd/server
-
-build-mcp:
-	@mkdir -p "$(MCP_DIR)/bin"
-	@cd "$(MCP_DIR)" && go build -o "bin/mock-loom-mcp" ./cmd/mock-loom-mcp
 
 build-web:
 	@pnpm --filter @mock-loom/web build

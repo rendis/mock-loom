@@ -1,11 +1,14 @@
 {
   "mcpServers": {
     "mock-loom": {
-      "command": "./apps/mcp/bin/mock-loom-mcp",
+      "command": "mcp-openapi-proxy",
       "args": [],
       "env": {
-        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
-        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
+        "MCP_SPEC": "https://raw.githubusercontent.com/rendis/mock-loom/main/packages/contracts/openapi/mock-loom.v1.yaml",
+        "MCP_BASE_URL": "http://127.0.0.1:18081",
+        "MCP_AUTH_TOKEN": "dummy-token",
+        "MCP_AUTH_PROFILE": "mock-loom",
+        "MCP_TOOL_PREFIX": "ml"
       }
     }
   }

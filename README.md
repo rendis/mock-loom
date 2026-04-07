@@ -76,24 +76,18 @@ Instead of writing throwaway mock servers, you define **contracts**, **priority-
 
 ## Architecture
 
-mock-loom is a monorepo with three independently deployable applications connected through REST APIs:
+mock-loom is a monorepo with two independently deployable applications connected through REST APIs:
 
 ```mermaid
 graph TB
     subgraph Clients
         Browser["Web Browser"]
-        CLI["Claude Code / MCP Client"]
         ExtAPI["External API Consumer"]
     end
 
     subgraph Web["apps/web — React SPA"]
         UI["UI Components<br/><small>React · Tailwind · Monaco</small>"]
         Store["Zustand Store"]
-    end
-
-    subgraph MCP["apps/mcp — MCP Server"]
-        Tools["12 MCP Tools<br/><small>stdio transport</small>"]
-        HTTPClient["HTTP Client"]
     end
 
     subgraph API["apps/api — Go API Server"]
@@ -115,9 +109,6 @@ graph TB
 
     Browser --> UI
     UI -- "REST API" --> Handlers
-    CLI --> Tools
-    Tools --> HTTPClient
-    HTTPClient -- "REST API" --> Handlers
     ExtAPI -- "Mock Requests" --> Runtime
     Handlers --> Middleware --> Usecases --> Ports
     Ports --> SQLiteAdapter --> DB
@@ -291,7 +282,6 @@ make run
 | `make dev`         | Watch mode with live reload (requires[air](https://github.com/air-verse/air)) |
 | `make dev-dummy`   | Watch mode with dummy auth                                                    |
 | `make run-dummy`   | Build + run with dummy auth (port 18081)                                      |
-| `make build-mcp`   | Build MCP server binary                                                       |
 | `make smoke-dummy` | Quick API health check                                                        |
 | `make clean`       | Remove build artifacts                                                        |
 
@@ -333,11 +323,6 @@ mock-loom/
 │   │   │       ├── usecase/          # Business logic
 │   │   │       └── validation/       # Payload validation
 │   │   └── Dockerfile
-│   ├── mcp/                          # MCP server for Claude Code
-│   │   ├── cmd/mock-loom-mcp/       # Entrypoint
-│   │   └── internal/
-│   │       ├── client/               # HTTP client → API
-│   │       └── tools/                # 18 MCP tool definitions
 │   └── web/                          # React SPA
 │       └── src/
 │           ├── app/                   # Shell, routing, session store
@@ -376,100 +361,17 @@ Full contract: [`packages/contracts/openapi/mock-loom.v1.yaml`](packages/contrac
 
 ## MCP Integration
 
-mock-loom ships with a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes 18 tools for AI-assisted API mocking workflows.
+Uses `mcp-openapi-proxy` — it reads the OpenAPI spec and exposes a small navigator/executor MCP surface:
 
-### Install Skill
+- `ml_list_endpoints` — discover available API operations
+- `ml_describe_endpoint` — inspect one endpoint contract in full
+- `ml_call_endpoint` — execute one endpoint by `toolName`
 
-```bash
-npx skills add https://github.com/rendis/mock-loom --skill mock-loom
-```
+Each API operation still gets a stable endpoint identifier such as `ml_get_api_v1_workspaces`, but that identifier is passed to `ml_describe_endpoint` / `ml_call_endpoint`; it is not a top-level MCP tool by itself.
 
-### Option A: Install from repo (go install)
+Install: `go install github.com/rendis/mcp-openapi-proxy/cmd/mcp-openapi-proxy@latest`
 
-Install the MCP binary directly from the repository — no need to clone:
-
-```bash
-go install github.com/rendis/mock-loom/apps/mcp/cmd/mock-loom-mcp@latest
-```
-
-Then add to your Claude Code MCP config (`~/.claude/mcp.json` or project `.mcp.json`):
-
-```json
-{
-  "mcpServers": {
-    "mock-loom": {
-      "command": "mock-loom-mcp",
-      "args": [],
-      "env": {
-        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
-        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
-      }
-    }
-  }
-}
-```
-
-> Requires `$GOPATH/bin` in your `$PATH`. Verify with `which mock-loom-mcp`.
-
-### Option B: Build locally (from cloned repo)
-
-```bash
-# 1. Start the API
-make run-dummy
-
-# 2. Build the MCP binary
-make build-mcp
-
-# 3. MCP config is already in .mcp.json — Claude Code auto-discovers it
-```
-
-### OIDC Authentication
-
-When running the API with a real OIDC provider, the MCP server authenticates as the current user via browser login:
-
-```bash
-# Login — opens browser for OIDC authentication
-mock-loom-mcp login
-
-# Check status
-mock-loom-mcp status
-
-# Logout (clears stored tokens)
-mock-loom-mcp logout
-```
-
-Tokens are stored in `~/.mock-loom/tokens.json` (0600 perms) and auto-refresh using the refresh token. Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env to use OIDC tokens instead of the static dummy token.
-
-### Tool Reference
-
-| Tool                                  | Purpose                              |
-| ------------------------------------- | ------------------------------------ |
-| `mock_loom_list_workspaces`           | List all workspaces                  |
-| `mock_loom_setup_workspace`           | Create or get workspace (idempotent) |
-| `mock_loom_list_integrations`         | List integrations in a workspace     |
-| `mock_loom_setup_integration`         | Create or get integration            |
-| `mock_loom_update_integration_auth`   | Update integration auth mode         |
-| `mock_loom_manage_auth_mock`          | Get/update auth mock policy          |
-| `mock_loom_manage_pack`              | Create/update endpoint pack          |
-| `mock_loom_import_routes`            | Import from OpenAPI / Postman / cURL |
-| `mock_loom_list_routes`              | List packs or endpoints              |
-| `mock_loom_get_overview`             | Full integration overview            |
-| `mock_loom_configure_endpoint`       | Update contract + scenarios          |
-| `mock_loom_update_endpoint_route`    | Update endpoint method/path          |
-| `mock_loom_manage_endpoint_revisions`| List/restore endpoint revisions      |
-| `mock_loom_get_traffic`             | View traffic logs                    |
-| `mock_loom_get_audit_events`        | List audit events                    |
-| `mock_loom_manage_data_source`      | Data source CRUD + baseline          |
-| `mock_loom_debug_entities`          | Entity timeline + rollback           |
-| `mock_loom_send_mock_request`       | Execute mock request                 |
-
-### Example Workflow
-
-```
-list_workspaces → setup_workspace → list_integrations → setup_integration
-→ manage_pack → import_routes → configure_endpoint
-→ manage_data_source → send_mock_request → get_traffic
-```
+See [`docs/mcp_setup.md`](docs/mcp_setup.md) for full setup (Claude Code, Codex, Gemini CLI) and [`skills/mock-loom/SKILL.md`](skills/mock-loom/SKILL.md) for tool reference.
 
 ## Deployment
 

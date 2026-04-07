@@ -15,115 +15,161 @@ allowed-tools:
 
 MCP integration for the mock-loom Rule-Based API Mocking Engine.
 
+Uses `mcp-openapi-proxy` — it reads the OpenAPI spec and exposes three MCP tools:
+
+- `ml_list_endpoints`
+- `ml_describe_endpoint`
+- `ml_call_endpoint`
+
+Each REST operation still gets a stable endpoint `toolName` such as `ml_get_api_v1_workspaces`, but that identifier is passed into `ml_describe_endpoint` / `ml_call_endpoint`; it is not a top-level MCP tool by itself.
+
 ## Setup
 
-### Install from repo (no clone needed)
+### Install the proxy binary
 
 ```bash
-go install github.com/rendis/mock-loom/apps/mcp/cmd/mock-loom-mcp@latest
+go install github.com/rendis/mcp-openapi-proxy/cmd/mcp-openapi-proxy@latest
 ```
 
-Then add to your MCP config (`~/.claude/mcp.json` or project `.mcp.json`):
+### Configuration
+
+`.mcp.json` at the project root is auto-detected by Claude Code. No additional setup needed when opening the project.
+
+**Env vars** (set in `.mcp.json`):
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `MCP_SPEC` | OpenAPI spec URL or file path | (required) |
+| `MCP_BASE_URL` | API base URL | (required) |
+| `MCP_AUTH_TOKEN` | Static auth token (dev/dummy mode) | — |
+| `MCP_AUTH_PROFILE` | Token storage namespace for OIDC sessions | `ml` / `default` |
+| `MCP_TOOL_PREFIX` | Tool name prefix | `ml` |
+| `MCP_OIDC_ISSUER` | OIDC issuer URL for proxy login | — |
+| `MCP_OIDC_CLIENT_ID` | OIDC client ID for proxy login | — |
+| `MCP_OIDC_SCOPES` | Optional scope override for proxy login | Proxy default |
+
+### Claude Code (CLI)
+
+Auto-detected from `.mcp.json` in repo root. To add manually:
+
+```bash
+claude mcp add mock-loom -s project -- mcp-openapi-proxy
+```
+
+### OpenAI Codex
+
+Edit `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.mock-loom]
+command = "mcp-openapi-proxy"
+args = []
+
+[mcp_servers.mock-loom.env]
+MCP_SPEC = "https://raw.githubusercontent.com/rendis/mock-loom/main/packages/contracts/openapi/mock-loom.v1.yaml"
+MCP_BASE_URL = "http://127.0.0.1:18081"
+MCP_AUTH_TOKEN = "dummy-token"
+MCP_AUTH_PROFILE = "mock-loom"
+MCP_TOOL_PREFIX = "ml"
+```
+
+### Gemini CLI
+
+Edit `.gemini/settings.json` (project) or `~/.gemini/settings.json` (global):
 
 ```json
 {
   "mcpServers": {
     "mock-loom": {
-      "command": "mock-loom-mcp",
+      "command": "mcp-openapi-proxy",
       "args": [],
       "env": {
-        "MOCK_LOOM_API_BASE_URL": "http://127.0.0.1:18081",
-        "MOCK_LOOM_AUTH_TOKEN": "dummy-token"
+        "MCP_SPEC": "https://raw.githubusercontent.com/rendis/mock-loom/main/packages/contracts/openapi/mock-loom.v1.yaml",
+        "MCP_BASE_URL": "http://127.0.0.1:18081",
+        "MCP_AUTH_TOKEN": "dummy-token",
+        "MCP_AUTH_PROFILE": "mock-loom",
+        "MCP_TOOL_PREFIX": "ml"
       }
     }
   }
 }
 ```
 
-### Build locally (from cloned repo)
-
-```bash
-make run-dummy    # Start API on port 18081 (no credentials needed)
-make build-mcp    # Build MCP binary
-```
-
-`.mcp.json` at project root configures Claude Code to spawn the MCP server with `MOCK_LOOM_AUTH_TOKEN=dummy-token`.
-
 ### OIDC (production)
 
 ```bash
-mock-loom-mcp login      # Open browser → OIDC login
-mock-loom-mcp status     # Verify token is valid
-mock-loom-mcp logout     # Clear stored tokens
+MCP_OIDC_ISSUER=https://auth.example.com/realms/mock-loom \
+MCP_OIDC_CLIENT_ID=mock-loom-cli \
+MCP_AUTH_PROFILE=mock-loom \
+mcp-openapi-proxy login      # Open browser -> OIDC login
+mcp-openapi-proxy status     # Verify token is valid
+mcp-openapi-proxy logout     # Clear stored tokens
 ```
 
-Remove `MOCK_LOOM_AUTH_TOKEN` from `.mcp.json` env so the MCP server reads OIDC tokens from `~/.mock-loom/tokens.json` instead. Tokens auto-refresh via refresh token.
+Remove `MCP_AUTH_TOKEN` from env so the proxy uses OIDC tokens instead. Tokens auto-refresh via refresh token. `mock-loom` exposes `/api/v1/auth/config` for the web app, but proxy login should be configured with `MCP_OIDC_ISSUER` + `MCP_OIDC_CLIENT_ID`.
 
 ## Quick Start Workflow
 
 ```
-1. mock_loom_list_workspaces          → discover existing workspaces
-2. mock_loom_setup_workspace          → create workspace (idempotent by slug)
-3. mock_loom_list_integrations        → discover integrations in a workspace
-4. mock_loom_setup_integration        → create integration in workspace
-5. mock_loom_manage_pack              → create endpoint pack (route group)
-6. mock_loom_import_routes            → import from OpenAPI/Postman/cURL
-   OR mock_loom_configure_endpoint    → manually configure contract + scenarios
-7. mock_loom_manage_data_source       → create data source + upload baseline JSON
-8. mock_loom_send_mock_request        → test the mock endpoint
-9. mock_loom_get_traffic              → verify scenario matching
-10. mock_loom_debug_entities          → inspect entity mutations
+1. ml_list_endpoints -> discover available operations
+2. Find the endpoint toolName you need (for example `ml_get_api_v1_workspaces`)
+3. ml_describe_endpoint(toolName=...) -> inspect request/response contract
+4. ml_call_endpoint(toolName=...) -> execute the operation with path/query/headers/body
+5. Repeat with the next endpoint toolName in the workflow
 ```
 
 ## Tool Reference
 
-### Workspace
+The proxy exposes these three MCP tools:
 
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_list_workspaces` | List all workspaces | — |
-| `mock_loom_setup_workspace` | Create/get workspace | `name`, `slug` |
+| MCP Tool | Purpose |
+|------|---------|
+| `ml_list_endpoints` | List indexed API operations with lightweight metadata |
+| `ml_describe_endpoint` | Return the full OpenAPI contract for one endpoint `toolName` |
+| `ml_call_endpoint` | Execute one endpoint `toolName` with structured args |
 
-### Integration & Packs
+Endpoint identifiers follow `ml_{method}_{path}` (path segments joined by underscores, path parameters replaced with `{name}`).
 
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_list_integrations` | List integrations in workspace | `workspace_id` |
-| `mock_loom_setup_integration` | Create/get integration | `workspace_id`, `name`, `slug`, `base_url?`, `auth_mode?` |
-| `mock_loom_update_integration_auth` | Update integration auth mode | `integration_id`, `auth_mode` (NONE/BEARER/API_KEY) |
-| `mock_loom_manage_auth_mock` | Get/update auth mock policy | `integration_id`, `action` (get/update), `mode?`, `prebuilt?`, `custom_expr?` |
-| `mock_loom_manage_pack` | Create/update pack | `integration_id`, `name`, `slug`, `base_path`, `pack_id?` |
-| `mock_loom_import_routes` | Bulk import routes | `integration_id`, `pack_id`, `source_type` (OPENAPI/POSTMAN/CURL), `payload` |
-| `mock_loom_list_routes` | List packs/routes | `integration_id`, `pack_id?` |
-| `mock_loom_get_overview` | Full integration overview | `integration_id` |
+### Common endpoint `toolName` values
 
-### Endpoints
-
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_configure_endpoint` | Get/update contract + scenarios | `integration_id`, `pack_id`, `endpoint_id`, `contract?`, `scenarios?` |
-| `mock_loom_update_endpoint_route` | Update endpoint method/path | `integration_id`, `pack_id`, `endpoint_id`, `method?`, `path?` |
-| `mock_loom_manage_endpoint_revisions` | List/restore revisions | `integration_id`, `pack_id`, `endpoint_id`, `action` (list/restore), `revision_id?` |
-| `mock_loom_get_traffic` | View traffic logs | `integration_id`, `pack_id`, `endpoint_id` |
-
-### Audit
-
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_get_audit_events` | List audit events | `integration_id`, `resource_type?`, `actor?`, `limit?`, `cursor?` |
-
-### Data Sources & Debugging
-
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_manage_data_source` | CRUD + baseline + schema | `integration_id`, `action`, `source_id?`, `name?`, `slug?`, `kind?`, `baseline_json?` |
-| `mock_loom_debug_entities` | List/create/timeline/rollback | `integration_id`, `source_id`, `action`, `entity_id?`, `target_event_id?`, `payload?` |
-
-### Runtime
-
-| Tool | Purpose | Key Args |
-|------|---------|----------|
-| `mock_loom_send_mock_request` | Execute mock request | `workspace_id`, `integration_id`, `method`, `path`, `headers?`, `query?`, `body?` |
+| `toolName` | Purpose |
+|------|---------|
+| `ml_get_api_v1_workspaces` | List all workspaces |
+| `ml_post_api_v1_workspaces` | Create workspace |
+| `ml_get_api_v1_workspaces_{workspaceId}` | Get workspace by ID |
+| `ml_patch_api_v1_workspaces_{workspaceId}` | Update workspace |
+| `ml_delete_api_v1_workspaces_{workspaceId}` | Archive workspace |
+| `ml_get_api_v1_workspaces_{workspaceId}_members` | List workspace members |
+| `ml_post_api_v1_workspaces_{workspaceId}_members_invitations` | Invite member |
+| `ml_patch_api_v1_workspaces_{workspaceId}_members_{memberId}_role` | Update member role |
+| `ml_patch_api_v1_workspaces_{workspaceId}_members_{memberId}_status` | Update member status |
+| `ml_get_api_v1_workspaces_{workspaceId}_integrations` | List integrations in workspace |
+| `ml_post_api_v1_workspaces_{workspaceId}_integrations` | Create integration |
+| `ml_get_api_v1_integrations_{integrationId}_overview` | Get integration overview |
+| `ml_patch_api_v1_integrations_{integrationId}_auth` | Update integration auth mode |
+| `ml_get_api_v1_integrations_{integrationId}_packs` | List packs |
+| `ml_post_api_v1_integrations_{integrationId}_packs` | Create pack |
+| `ml_patch_api_v1_integrations_{integrationId}_packs_{packId}` | Update pack |
+| `ml_get_api_v1_integrations_{integrationId}_packs_{packId}_routes` | List routes in pack |
+| `ml_post_api_v1_integrations_{integrationId}_packs_{packId}_imports` | Import routes (OpenAPI/Postman/cURL) |
+| `ml_get_api_v1_integrations_{integrationId}_packs_{packId}_endpoints_{endpointId}` | Get endpoint details |
+| `ml_get_api_v1_integrations_{..}_endpoints_{..}_autocomplete-context` | Get autocomplete context |
+| `ml_post_api_v1_integrations_{..}_endpoints_{..}_validate` | Validate contract + scenarios |
+| `ml_patch_api_v1_integrations_{..}_endpoints_{..}_route` | Update endpoint route |
+| `ml_patch_api_v1_integrations_{..}_endpoints_{..}_auth` | Update endpoint auth |
+| `ml_put_api_v1_integrations_{..}_endpoints_{..}_contract` | Update contract |
+| `ml_put_api_v1_integrations_{..}_endpoints_{..}_scenarios` | Update scenarios |
+| `ml_get_api_v1_integrations_{..}_endpoints_{..}_traffic` | Get traffic logs |
+| `ml_get_api_v1_integrations_{..}_endpoints_{..}_revisions` | List revisions |
+| `ml_post_api_v1_integrations_{..}_endpoints_{..}_revisions_{revisionId}_restore` | Restore revision |
+| `ml_get_api_v1_integrations_{integrationId}_data-sources` | List data sources |
+| `ml_post_api_v1_integrations_{integrationId}_data-sources` | Create data source |
+| `ml_patch_api_v1_integrations_{integrationId}_data-sources_{sourceId}` | Update data source |
+| `ml_delete_api_v1_integrations_{integrationId}_data-sources_{sourceId}` | Delete data source |
+| `ml_post_api_v1_integrations_{integrationId}_data-sources_{sourceId}_baseline` | Upload baseline |
+| `ml_get_api_v1_auth_config` | Get auth runtime config |
+| `ml_get_api_v1_auth_me` | Get authenticated user profile |
+| `ml_post_api_v1_auth_logout` | Logout current session |
 
 ## Contract JSON Shape
 
@@ -150,7 +196,7 @@ The contract defines expected request structure:
 
 ## Scenario JSON Shape
 
-Scenarios are priority-ordered condition→response rules:
+Scenarios are priority-ordered condition->response rules:
 
 ```json
 [
@@ -197,9 +243,9 @@ Scenarios are priority-ordered condition→response rules:
 }
 ```
 
-- JSON object → serialized as JSON, auto Content-Type `application/json`
-- String → raw bytes, default Content-Type `text/plain; charset=utf-8` (override via headers)
-- null/omitted → no body
+- JSON object -> serialized as JSON, auto Content-Type `application/json`
+- String -> raw bytes, default Content-Type `text/plain; charset=utf-8` (override via headers)
+- null/omitted -> no body
 
 ## Expression Language (expr-lang)
 
@@ -235,7 +281,7 @@ Body parsing depends on `Content-Type`:
 | Content-Type | `request.body` type | Example |
 |---|---|---|
 | `application/json` | Parsed JSON (object, array, etc.) | `request.body.name` |
-| `application/x-www-form-urlencoded` | Map of field→string (first value per key) | `request.body.accion` |
+| `application/x-www-form-urlencoded` | Map of field->string (first value per key) | `request.body.accion` |
 | Other / missing | Raw string or JSON attempt | — |
 
 Form-urlencoded example — request body `accion=buscar&txtRun=26075524`:

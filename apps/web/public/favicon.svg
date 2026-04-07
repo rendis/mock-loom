@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%">
+  <defs>
+    <linearGradient id="gradA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#8B5CF6" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Shape: Bold Soft Square Background -->
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#0F172A" />
+
+  <!-- Single Geometric Symbol: Continuous angular infinity knot showing state & routing reversibility -->
+  <!-- The path naturally weaves over itself at the center using a precision geometric gap -->
+  <path
+    d="M 27 37 L 20 44 L 8 32 L 20 20 L 44 44 L 56 32 L 44 20 L 37 27"
+    stroke="url(#gradA)"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    fill="none"
+  />
+</svg>

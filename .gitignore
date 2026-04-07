@@ -6,7 +6,6 @@ apps/web/tsconfig.tsbuildinfo
 apps/web/vite.config.js
 apps/api/mock-loom.db
 apps/api/bin/
-apps/mcp/bin/
 *.db
 *.log
 *.pen
